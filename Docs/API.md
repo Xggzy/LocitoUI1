@@ -14,6 +14,8 @@ local Window = LocitoUI.new({
 
 Use the standalone bundle when you do not have the full ModuleScript folder available:
 
+The GitHub repository must be public for `game:HttpGet` to download these files.
+
 ```lua
 local LocitoUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Xggzy/LocitoUI1/main/dist/LocitoUI.lua"))()
 ```

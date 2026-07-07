@@ -87,6 +87,8 @@ Movement:Button({
 
 If you are running LocitoUI as one direct script instead of as a ModuleScript folder, use the standalone bundle:
 
+The GitHub repository must be public for `game:HttpGet` to download these files.
+
 ```lua
 local LocitoUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Xggzy/LocitoUI1/main/dist/LocitoUI.lua"))()
 ```
