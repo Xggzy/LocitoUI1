@@ -17,10 +17,16 @@ function Tab.new(Window, Name, Icon)
 	self.Sections = {}
 
 	local CurrentTheme = Theme:Get()
+	local Settings = Window.Settings or {}
+	local TabHeight = Settings.TabHeight or 38
+	local TabRadius = Settings.TabRadius or 9
+	local TabTextInset = Settings.TabTextInset or 12
+	local IndicatorWidth = Settings.TabIndicatorWidth or 3
+	local IndicatorHeight = Settings.TabIndicatorHeight or 22
 
 	local Button = Utility:Create("TextButton", {
 		Name = Name .. "Tab",
-		Size = UDim2.new(1, 0, 0, 38),
+		Size = UDim2.new(1, 0, 0, TabHeight),
 		BackgroundColor3 = CurrentTheme.Surface,
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
@@ -28,14 +34,14 @@ function Tab.new(Window, Name, Icon)
 		AutoButtonColor = false,
 		Parent = Window.SidebarList,
 	})
-	Utility:Round(Button, 9)
+	Utility:Round(Button, TabRadius)
 	Theme:Register(Button, "BackgroundColor3", "Surface")
 
 	local Indicator = Utility:Create("Frame", {
 		Name = "Indicator",
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 0, 0.5, 0),
-		Size = UDim2.new(0, 3, 0, 0),
+		Size = UDim2.new(0, IndicatorWidth, 0, 0),
 		BackgroundColor3 = CurrentTheme.Accent,
 		BorderSizePixel = 0,
 		Parent = Button,
@@ -46,12 +52,12 @@ function Tab.new(Window, Name, Icon)
 	local Label = Utility:Create("TextLabel", {
 		Name = "Label",
 		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 12, 0, 0),
-		Size = UDim2.new(1, -16, 1, 0),
-		Font = Enum.Font.GothamMedium,
+		Position = UDim2.new(0, TabTextInset, 0, 0),
+		Size = UDim2.new(1, -TabTextInset - 4, 1, 0),
+		Font = Settings.TabFont or Enum.Font.GothamMedium,
 		Text = (Icon and (Icon .. "  ") or "") .. Name,
 		TextColor3 = CurrentTheme.SubText,
-		TextSize = 13,
+		TextSize = Settings.TabTextSize or 13,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Button,
 	})
@@ -77,6 +83,10 @@ function Tab.new(Window, Name, Icon)
 	self.Label = Label
 	self.Page = Page
 	self.Layout = Layout
+	self.IndicatorWidth = IndicatorWidth
+	self.IndicatorHeight = IndicatorHeight
+	self.SelectedTransparency = Settings.TabSelectedTransparency or 0
+	self.HoverTransparency = Settings.TabHoverTransparency or 0.55
 	self.ThemeDisconnect = Theme:OnChanged(function()
 		self:_SetSelected(Window.ActiveTab == self)
 	end)
@@ -87,7 +97,7 @@ function Tab.new(Window, Name, Icon)
 
 	Button.MouseEnter:Connect(function()
 		if Window.ActiveTab == self then return end
-		Animation:Play(Button, { BackgroundTransparency = 0.55 }, { Time = 0.12 })
+		Animation:Play(Button, { BackgroundTransparency = self.HoverTransparency }, { Time = 0.12 })
 	end)
 
 	Button.MouseLeave:Connect(function()
@@ -106,12 +116,12 @@ function Tab:_SetSelected(IsSelected)
 	self.Page.Visible = IsSelected
 
 	if IsSelected then
-		Animation:Play(self.Button, { BackgroundTransparency = 0 }, { Time = 0.15 })
-		Animation:Play(self.Indicator, { Size = UDim2.new(0, 3, 0, 22) }, { Time = 0.15 })
+		Animation:Play(self.Button, { BackgroundTransparency = self.SelectedTransparency }, { Time = 0.15 })
+		Animation:Play(self.Indicator, { Size = UDim2.new(0, self.IndicatorWidth, 0, self.IndicatorHeight) }, { Time = 0.15 })
 		Animation:Play(self.Label, { TextColor3 = Theme:Get().Text }, { Time = 0.15 })
 	else
 		Animation:Play(self.Button, { BackgroundTransparency = 1 }, { Time = 0.15 })
-		Animation:Play(self.Indicator, { Size = UDim2.new(0, 3, 0, 0) }, { Time = 0.15 })
+		Animation:Play(self.Indicator, { Size = UDim2.new(0, self.IndicatorWidth, 0, 0) }, { Time = 0.15 })
 		Animation:Play(self.Label, { TextColor3 = Theme:Get().SubText }, { Time = 0.15 })
 	end
 end

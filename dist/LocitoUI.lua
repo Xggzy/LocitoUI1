@@ -98,7 +98,7 @@ function Utility:Destroy(Object)
 	end
 end
 
-function Utility:MakeDraggable(Handle, Target)
+function Utility:MakeDraggable(Handle, Target, OnMove)
 	local Dragging = false
 	local DragStart
 	local StartPosition
@@ -131,6 +131,10 @@ function Utility:MakeDraggable(Handle, Target)
 			StartPosition.Y.Scale,
 			StartPosition.Y.Offset + Delta.Y
 		)
+
+		if OnMove then
+			OnMove(Target.Position)
+		end
 	end))
 
 	return function()
@@ -171,6 +175,7 @@ Theme.Themes = {
 		SubText = Color3.fromRGB(164, 164, 180),
 		Muted = Color3.fromRGB(90, 90, 108),
 		Border = Color3.fromRGB(66, 66, 88),
+		Shadow = Color3.fromRGB(0, 0, 0),
 		Success = Color3.fromRGB(72, 210, 118),
 		Warning = Color3.fromRGB(255, 186, 73),
 		Error = Color3.fromRGB(255, 83, 83),
@@ -189,6 +194,7 @@ Theme.Themes = {
 		SubText = Color3.fromRGB(160, 160, 166),
 		Muted = Color3.fromRGB(86, 86, 92),
 		Border = Color3.fromRGB(56, 58, 66),
+		Shadow = Color3.fromRGB(0, 0, 0),
 		Success = Color3.fromRGB(72, 210, 118),
 		Warning = Color3.fromRGB(255, 186, 73),
 		Error = Color3.fromRGB(255, 83, 83),
@@ -207,6 +213,7 @@ Theme.Themes = {
 		SubText = Color3.fromRGB(135, 174, 202),
 		Muted = Color3.fromRGB(72, 105, 130),
 		Border = Color3.fromRGB(42, 84, 116),
+		Shadow = Color3.fromRGB(0, 0, 0),
 		Success = Color3.fromRGB(72, 210, 118),
 		Warning = Color3.fromRGB(255, 186, 73),
 		Error = Color3.fromRGB(255, 83, 83),
@@ -225,11 +232,31 @@ Theme.Themes = {
 		SubText = Color3.fromRGB(143, 186, 162),
 		Muted = Color3.fromRGB(76, 110, 91),
 		Border = Color3.fromRGB(42, 88, 65),
+		Shadow = Color3.fromRGB(0, 0, 0),
 		Success = Color3.fromRGB(72, 210, 118),
 		Warning = Color3.fromRGB(255, 186, 73),
 		Error = Color3.fromRGB(255, 83, 83),
 		CornerRadius = 12,
 		AnimationSpeed = 0.22,
+	},
+
+	Phantom = {
+		Background = Color3.fromRGB(7, 8, 12),
+		Secondary = Color3.fromRGB(12, 14, 20),
+		Surface = Color3.fromRGB(17, 20, 29),
+		SurfaceLight = Color3.fromRGB(25, 30, 42),
+		Accent = Color3.fromRGB(96, 165, 250),
+		AccentLight = Color3.fromRGB(147, 197, 253),
+		Text = Color3.fromRGB(241, 245, 249),
+		SubText = Color3.fromRGB(148, 163, 184),
+		Muted = Color3.fromRGB(71, 85, 105),
+		Border = Color3.fromRGB(31, 41, 55),
+		Shadow = Color3.fromRGB(0, 0, 0),
+		Success = Color3.fromRGB(52, 211, 153),
+		Warning = Color3.fromRGB(251, 191, 36),
+		Error = Color3.fromRGB(248, 113, 113),
+		CornerRadius = 10,
+		AnimationSpeed = 0.18,
 	},
 }
 
@@ -1745,10 +1772,16 @@ function Tab.new(Window, Name, Icon)
 	self.Sections = {}
 
 	local CurrentTheme = Theme:Get()
+	local Settings = Window.Settings or {}
+	local TabHeight = Settings.TabHeight or 38
+	local TabRadius = Settings.TabRadius or 9
+	local TabTextInset = Settings.TabTextInset or 12
+	local IndicatorWidth = Settings.TabIndicatorWidth or 3
+	local IndicatorHeight = Settings.TabIndicatorHeight or 22
 
 	local Button = Utility:Create("TextButton", {
 		Name = Name .. "Tab",
-		Size = UDim2.new(1, 0, 0, 38),
+		Size = UDim2.new(1, 0, 0, TabHeight),
 		BackgroundColor3 = CurrentTheme.Surface,
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
@@ -1756,14 +1789,14 @@ function Tab.new(Window, Name, Icon)
 		AutoButtonColor = false,
 		Parent = Window.SidebarList,
 	})
-	Utility:Round(Button, 9)
+	Utility:Round(Button, TabRadius)
 	Theme:Register(Button, "BackgroundColor3", "Surface")
 
 	local Indicator = Utility:Create("Frame", {
 		Name = "Indicator",
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 0, 0.5, 0),
-		Size = UDim2.new(0, 3, 0, 0),
+		Size = UDim2.new(0, IndicatorWidth, 0, 0),
 		BackgroundColor3 = CurrentTheme.Accent,
 		BorderSizePixel = 0,
 		Parent = Button,
@@ -1774,12 +1807,12 @@ function Tab.new(Window, Name, Icon)
 	local Label = Utility:Create("TextLabel", {
 		Name = "Label",
 		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 12, 0, 0),
-		Size = UDim2.new(1, -16, 1, 0),
-		Font = Enum.Font.GothamMedium,
+		Position = UDim2.new(0, TabTextInset, 0, 0),
+		Size = UDim2.new(1, -TabTextInset - 4, 1, 0),
+		Font = Settings.TabFont or Enum.Font.GothamMedium,
 		Text = (Icon and (Icon .. "  ") or "") .. Name,
 		TextColor3 = CurrentTheme.SubText,
-		TextSize = 13,
+		TextSize = Settings.TabTextSize or 13,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Button,
 	})
@@ -1805,6 +1838,10 @@ function Tab.new(Window, Name, Icon)
 	self.Label = Label
 	self.Page = Page
 	self.Layout = Layout
+	self.IndicatorWidth = IndicatorWidth
+	self.IndicatorHeight = IndicatorHeight
+	self.SelectedTransparency = Settings.TabSelectedTransparency or 0
+	self.HoverTransparency = Settings.TabHoverTransparency or 0.55
 	self.ThemeDisconnect = Theme:OnChanged(function()
 		self:_SetSelected(Window.ActiveTab == self)
 	end)
@@ -1815,7 +1852,7 @@ function Tab.new(Window, Name, Icon)
 
 	Button.MouseEnter:Connect(function()
 		if Window.ActiveTab == self then return end
-		Animation:Play(Button, { BackgroundTransparency = 0.55 }, { Time = 0.12 })
+		Animation:Play(Button, { BackgroundTransparency = self.HoverTransparency }, { Time = 0.12 })
 	end)
 
 	Button.MouseLeave:Connect(function()
@@ -1834,12 +1871,12 @@ function Tab:_SetSelected(IsSelected)
 	self.Page.Visible = IsSelected
 
 	if IsSelected then
-		Animation:Play(self.Button, { BackgroundTransparency = 0 }, { Time = 0.15 })
-		Animation:Play(self.Indicator, { Size = UDim2.new(0, 3, 0, 22) }, { Time = 0.15 })
+		Animation:Play(self.Button, { BackgroundTransparency = self.SelectedTransparency }, { Time = 0.15 })
+		Animation:Play(self.Indicator, { Size = UDim2.new(0, self.IndicatorWidth, 0, self.IndicatorHeight) }, { Time = 0.15 })
 		Animation:Play(self.Label, { TextColor3 = Theme:Get().Text }, { Time = 0.15 })
 	else
 		Animation:Play(self.Button, { BackgroundTransparency = 1 }, { Time = 0.15 })
-		Animation:Play(self.Indicator, { Size = UDim2.new(0, 3, 0, 0) }, { Time = 0.15 })
+		Animation:Play(self.Indicator, { Size = UDim2.new(0, self.IndicatorWidth, 0, 0) }, { Time = 0.15 })
 		Animation:Play(self.Label, { TextColor3 = Theme:Get().SubText }, { Time = 0.15 })
 	end
 end
@@ -1925,6 +1962,9 @@ function Window.new(Settings)
 	local ShowMinimize = ShowControls and Settings.MinimizeButton ~= false
 	local ControlReserve = ShowControls and 90 or 16
 	local TitleX = Settings.Logo == false and OuterPadding or (OuterPadding + 42)
+	local MainAnchor = Settings.AnchorPoint or Vector2.new(0.5, 0.5)
+	local MainPosition = Settings.Position or UDim2.new(0.5, 0, 0.5, 0)
+	local Radius = Settings.Radius or CurrentTheme.CornerRadius
 
 	local Gui = Utility:Create("ScreenGui", {
 		Name = Settings.GuiName or "LocitoUI",
@@ -1937,19 +1977,38 @@ function Window.new(Settings)
 	})
 	self.Gui = Gui
 
+	local Shadow
+	if Settings.Shadow ~= false then
+		Shadow = Utility:Create("Frame", {
+			Name = "Shadow",
+			AnchorPoint = MainAnchor,
+			Position = Settings.ShadowPosition or MainPosition,
+			Size = Settings.ShadowSize or (WindowSize + UDim2.new(0, 22, 0, 22)),
+			BackgroundColor3 = CurrentTheme.Shadow or Color3.fromRGB(0, 0, 0),
+			BackgroundTransparency = Settings.ShadowTransparency or 0.48,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = Gui,
+		})
+		Utility:Round(Shadow, Radius + 8)
+		Theme:Register(Shadow, "BackgroundColor3", "Shadow")
+	end
+	self.Shadow = Shadow
+
 	local Main = Utility:Create("Frame", {
 		Name = "MainWindow",
-		AnchorPoint = Settings.AnchorPoint or Vector2.new(0.5, 0.5),
-		Position = Settings.Position or UDim2.new(0.5, 0, 0.5, 0),
+		AnchorPoint = MainAnchor,
+		Position = MainPosition,
 		Size = WindowSize,
 		BackgroundColor3 = CurrentTheme.Background,
 		BackgroundTransparency = Settings.Transparency or Settings.BackgroundTransparency or 0,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
+		ZIndex = 1,
 		Parent = Gui,
 	})
-	Utility:Round(Main, CurrentTheme.CornerRadius)
-	local MainStroke = Utility:Stroke(Main, CurrentTheme.Border, 1)
+	Utility:Round(Main, Radius)
+	local MainStroke = Utility:Stroke(Main, CurrentTheme.Border, Settings.BorderThickness or 1)
 	Theme:Register(Main, "BackgroundColor3", "Background")
 	Theme:Register(MainStroke, "Color", "Border")
 	self.Frame = Main
@@ -1963,6 +2022,21 @@ function Window.new(Settings)
 	})
 	Theme:Register(TopBar, "BackgroundColor3", "Background")
 	self.TopBar = TopBar
+
+	if Settings.AccentLine ~= false then
+		local AccentLine = Utility:Create("Frame", {
+			Name = "AccentLine",
+			AnchorPoint = Vector2.new(0, 1),
+			Position = UDim2.new(0, 0, 1, 0),
+			Size = UDim2.new(1, 0, 0, Settings.AccentLineHeight or 1),
+			BackgroundColor3 = CurrentTheme.Accent,
+			BackgroundTransparency = Settings.AccentLineTransparency or 0.35,
+			BorderSizePixel = 0,
+			Parent = TopBar,
+		})
+		Theme:Register(AccentLine, "BackgroundColor3", "Accent")
+		self.AccentLine = AccentLine
+	end
 
 	local Logo = Utility:Create("TextLabel", {
 		Name = "Logo",
@@ -2057,7 +2131,7 @@ function Window.new(Settings)
 		BorderSizePixel = 0,
 		Parent = Main,
 	})
-	Utility:Round(Sidebar, 12)
+	Utility:Round(Sidebar, Settings.PanelRadius or Radius)
 	Theme:Register(Sidebar, "BackgroundColor3", "Secondary")
 	self.Sidebar = Sidebar
 
@@ -2086,7 +2160,7 @@ function Window.new(Settings)
 		ClipsDescendants = true,
 		Parent = Main,
 	})
-	Utility:Round(Content, 12)
+	Utility:Round(Content, Settings.PanelRadius or Radius)
 	Theme:Register(Content, "BackgroundColor3", "Secondary")
 	self.Content = Content
 
@@ -2103,7 +2177,11 @@ function Window.new(Settings)
 	self.NotificationHolder = NotificationHolder
 
 	if Settings.Draggable ~= false then
-		self.DragDisconnect = Utility:MakeDraggable(TopBar, Main)
+		self.DragDisconnect = Utility:MakeDraggable(TopBar, Main, function(Position)
+			if Shadow then
+				Shadow.Position = Position
+			end
+		end)
 	end
 
 	if ShowClose then
@@ -2114,12 +2192,18 @@ function Window.new(Settings)
 
 	local Minimized = false
 	local FullSize = Main.Size
+	local ShadowFullSize = Shadow and Shadow.Size
 	if ShowMinimize then
 		Minimize.MouseButton1Click:Connect(function()
 			Minimized = not Minimized
 			Animation:Play(Main, {
 				Size = Minimized and UDim2.new(0, FullSize.X.Offset, 0, TopBarHeight) or FullSize,
 			}, { Time = 0.22 })
+			if Shadow and ShadowFullSize then
+				Animation:Play(Shadow, {
+					Size = Minimized and UDim2.new(0, FullSize.X.Offset + 22, 0, TopBarHeight + 22) or ShadowFullSize,
+				}, { Time = 0.22 })
+			end
 		end)
 	end
 
@@ -2195,10 +2279,16 @@ end
 
 function Window:SetSize(Size)
 	self.Frame.Size = Size
+	if self.Shadow then
+		self.Shadow.Size = Size + UDim2.new(0, 22, 0, 22)
+	end
 end
 
 function Window:SetPosition(Position)
 	self.Frame.Position = Position
+	if self.Shadow then
+		self.Shadow.Position = Position
+	end
 end
 
 function Window:SetTheme(Name)
@@ -2228,6 +2318,8 @@ function Window:Destroy()
 		self.Gui:Destroy()
 		self.Gui = nil
 	end
+
+	self.Shadow = nil
 end
 
 -- src/init.lua

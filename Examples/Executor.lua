@@ -10,19 +10,6 @@ local Success, ErrorMessage = xpcall(function()
 
 	local LocitoUI = Loader()
 
-	LocitoUI:AddTheme("Candy", {
-		Background = Color3.fromRGB(18, 12, 20),
-		Secondary = Color3.fromRGB(28, 19, 31),
-		Surface = Color3.fromRGB(39, 27, 44),
-		SurfaceLight = Color3.fromRGB(53, 35, 61),
-		Accent = Color3.fromRGB(255, 120, 210),
-		AccentLight = Color3.fromRGB(255, 174, 230),
-		Text = Color3.fromRGB(255, 246, 252),
-		SubText = Color3.fromRGB(214, 178, 204),
-		Muted = Color3.fromRGB(116, 82, 108),
-		Border = Color3.fromRGB(92, 58, 86),
-	}, "Nebula")
-
 	local Players = game:GetService("Players")
 	local Parent = typeof(gethui) == "function" and gethui() or game:GetService("CoreGui")
 	local TestGui = Instance.new("ScreenGui")
@@ -41,25 +28,35 @@ local Success, ErrorMessage = xpcall(function()
 	end
 
 	local Window = LocitoUI.new({
-		Name = "Locito Hub",
-		Subtitle = "Executor test",
+		Name = "Locito",
+		Subtitle = "Phantom preset",
 		LogoText = "L",
-		Theme = "Candy",
+		Theme = "Phantom",
 		Parent = Parent,
-		Width = 560,
-		Height = 360,
-		SidebarWidth = 130,
-		Padding = 12,
-		Gap = 10,
+		Width = 620,
+		Height = 390,
+		SidebarWidth = 138,
+		Padding = 10,
+		Gap = 8,
+		ContentGap = 8,
+		TopBarHeight = 52,
+		PanelRadius = 10,
+		TabHeight = 34,
+		TabIndicatorHeight = 18,
+		TabSelectedTransparency = 0.08,
+		TabHoverTransparency = 0.55,
+		Shadow = true,
+		ShadowTransparency = 0.5,
 		DisplayOrder = 999999,
 		Animate = false,
 	})
 
 	local Home = Window:CreateTab("Home", "H")
 	local Main = Home:CreateSection({
-		Name = "Main",
+		Name = "Dashboard",
 		Padding = 10,
 		ItemSpacing = 6,
+		Radius = 10,
 	})
 
 	Main:Paragraph({
@@ -110,8 +107,8 @@ local Success, ErrorMessage = xpcall(function()
 
 	ThemeSection:Dropdown({
 		Text = "Theme",
-		Options = { "Nebula", "Carbon", "Ocean", "Emerald" },
-		Default = "Nebula",
+		Options = { "Phantom", "Nebula", "Carbon", "Ocean", "Emerald" },
+		Default = "Phantom",
 		Changed = function(Name)
 			LocitoUI:SetTheme(Name)
 		end,

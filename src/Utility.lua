@@ -88,7 +88,7 @@ function Utility:Destroy(Object)
 	end
 end
 
-function Utility:MakeDraggable(Handle, Target)
+function Utility:MakeDraggable(Handle, Target, OnMove)
 	local Dragging = false
 	local DragStart
 	local StartPosition
@@ -121,6 +121,10 @@ function Utility:MakeDraggable(Handle, Target)
 			StartPosition.Y.Scale,
 			StartPosition.Y.Offset + Delta.Y
 		)
+
+		if OnMove then
+			OnMove(Target.Position)
+		end
 	end))
 
 	return function()

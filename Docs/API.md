@@ -30,6 +30,14 @@ Window:SetTheme("Ocean")
 
 ## Themes
 
+Built-in themes:
+
+- `Nebula`
+- `Carbon`
+- `Ocean`
+- `Emerald`
+- `Phantom`
+
 ```lua
 LocitoUI:AddTheme("Candy", {
     Background = Color3.fromRGB(18, 12, 20),
@@ -47,6 +55,27 @@ LocitoUI:AddTheme("Candy", {
 LocitoUI:SetTheme("Candy")
 LocitoUI:SetAccent(Color3.fromRGB(0, 157, 255))
 print(table.concat(LocitoUI:GetThemes(), ", "))
+```
+
+Compact dark preset:
+
+```lua
+local Window = LocitoUI.new({
+    Name = "Locito",
+    Theme = "Phantom",
+    Width = 620,
+    Height = 390,
+    SidebarWidth = 138,
+    Padding = 10,
+    Gap = 8,
+    ContentGap = 8,
+    TopBarHeight = 52,
+    PanelRadius = 10,
+    TabHeight = 34,
+    TabIndicatorHeight = 18,
+    TabSelectedTransparency = 0.08,
+    Shadow = true,
+})
 ```
 
 ## Loadstring

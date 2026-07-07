@@ -26,6 +26,7 @@ Built so far:
 - Simple color picker
 - Notifications
 - In-memory config module
+- Premium `Phantom` style preset
 
 ## Folder Structure
 
@@ -91,6 +92,28 @@ Movement:Button({
 ## Customization
 
 You can add themes, adjust the window layout, and customize individual controls.
+
+For a compact premium dark style, use the built-in `Phantom` theme:
+
+```lua
+local Window = LocitoUI.new({
+    Name = "Locito",
+    Subtitle = "Phantom preset",
+    Theme = "Phantom",
+    Width = 620,
+    Height = 390,
+    SidebarWidth = 138,
+    Padding = 10,
+    Gap = 8,
+    ContentGap = 8,
+    TopBarHeight = 52,
+    PanelRadius = 10,
+    TabHeight = 34,
+    TabIndicatorHeight = 18,
+    TabSelectedTransparency = 0.08,
+    Shadow = true,
+})
+```
 
 ```lua
 LocitoUI:AddTheme("Candy", {

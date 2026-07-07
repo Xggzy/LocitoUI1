@@ -48,6 +48,9 @@ function Window.new(Settings)
 	local ShowMinimize = ShowControls and Settings.MinimizeButton ~= false
 	local ControlReserve = ShowControls and 90 or 16
 	local TitleX = Settings.Logo == false and OuterPadding or (OuterPadding + 42)
+	local MainAnchor = Settings.AnchorPoint or Vector2.new(0.5, 0.5)
+	local MainPosition = Settings.Position or UDim2.new(0.5, 0, 0.5, 0)
+	local Radius = Settings.Radius or CurrentTheme.CornerRadius
 
 	local Gui = Utility:Create("ScreenGui", {
 		Name = Settings.GuiName or "LocitoUI",
@@ -60,19 +63,38 @@ function Window.new(Settings)
 	})
 	self.Gui = Gui
 
+	local Shadow
+	if Settings.Shadow ~= false then
+		Shadow = Utility:Create("Frame", {
+			Name = "Shadow",
+			AnchorPoint = MainAnchor,
+			Position = Settings.ShadowPosition or MainPosition,
+			Size = Settings.ShadowSize or (WindowSize + UDim2.new(0, 22, 0, 22)),
+			BackgroundColor3 = CurrentTheme.Shadow or Color3.fromRGB(0, 0, 0),
+			BackgroundTransparency = Settings.ShadowTransparency or 0.48,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = Gui,
+		})
+		Utility:Round(Shadow, Radius + 8)
+		Theme:Register(Shadow, "BackgroundColor3", "Shadow")
+	end
+	self.Shadow = Shadow
+
 	local Main = Utility:Create("Frame", {
 		Name = "MainWindow",
-		AnchorPoint = Settings.AnchorPoint or Vector2.new(0.5, 0.5),
-		Position = Settings.Position or UDim2.new(0.5, 0, 0.5, 0),
+		AnchorPoint = MainAnchor,
+		Position = MainPosition,
 		Size = WindowSize,
 		BackgroundColor3 = CurrentTheme.Background,
 		BackgroundTransparency = Settings.Transparency or Settings.BackgroundTransparency or 0,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
+		ZIndex = 1,
 		Parent = Gui,
 	})
-	Utility:Round(Main, CurrentTheme.CornerRadius)
-	local MainStroke = Utility:Stroke(Main, CurrentTheme.Border, 1)
+	Utility:Round(Main, Radius)
+	local MainStroke = Utility:Stroke(Main, CurrentTheme.Border, Settings.BorderThickness or 1)
 	Theme:Register(Main, "BackgroundColor3", "Background")
 	Theme:Register(MainStroke, "Color", "Border")
 	self.Frame = Main
@@ -86,6 +108,21 @@ function Window.new(Settings)
 	})
 	Theme:Register(TopBar, "BackgroundColor3", "Background")
 	self.TopBar = TopBar
+
+	if Settings.AccentLine ~= false then
+		local AccentLine = Utility:Create("Frame", {
+			Name = "AccentLine",
+			AnchorPoint = Vector2.new(0, 1),
+			Position = UDim2.new(0, 0, 1, 0),
+			Size = UDim2.new(1, 0, 0, Settings.AccentLineHeight or 1),
+			BackgroundColor3 = CurrentTheme.Accent,
+			BackgroundTransparency = Settings.AccentLineTransparency or 0.35,
+			BorderSizePixel = 0,
+			Parent = TopBar,
+		})
+		Theme:Register(AccentLine, "BackgroundColor3", "Accent")
+		self.AccentLine = AccentLine
+	end
 
 	local Logo = Utility:Create("TextLabel", {
 		Name = "Logo",
@@ -180,7 +217,7 @@ function Window.new(Settings)
 		BorderSizePixel = 0,
 		Parent = Main,
 	})
-	Utility:Round(Sidebar, 12)
+	Utility:Round(Sidebar, Settings.PanelRadius or Radius)
 	Theme:Register(Sidebar, "BackgroundColor3", "Secondary")
 	self.Sidebar = Sidebar
 
@@ -209,7 +246,7 @@ function Window.new(Settings)
 		ClipsDescendants = true,
 		Parent = Main,
 	})
-	Utility:Round(Content, 12)
+	Utility:Round(Content, Settings.PanelRadius or Radius)
 	Theme:Register(Content, "BackgroundColor3", "Secondary")
 	self.Content = Content
 
@@ -226,7 +263,11 @@ function Window.new(Settings)
 	self.NotificationHolder = NotificationHolder
 
 	if Settings.Draggable ~= false then
-		self.DragDisconnect = Utility:MakeDraggable(TopBar, Main)
+		self.DragDisconnect = Utility:MakeDraggable(TopBar, Main, function(Position)
+			if Shadow then
+				Shadow.Position = Position
+			end
+		end)
 	end
 
 	if ShowClose then
@@ -237,12 +278,18 @@ function Window.new(Settings)
 
 	local Minimized = false
 	local FullSize = Main.Size
+	local ShadowFullSize = Shadow and Shadow.Size
 	if ShowMinimize then
 		Minimize.MouseButton1Click:Connect(function()
 			Minimized = not Minimized
 			Animation:Play(Main, {
 				Size = Minimized and UDim2.new(0, FullSize.X.Offset, 0, TopBarHeight) or FullSize,
 			}, { Time = 0.22 })
+			if Shadow and ShadowFullSize then
+				Animation:Play(Shadow, {
+					Size = Minimized and UDim2.new(0, FullSize.X.Offset + 22, 0, TopBarHeight + 22) or ShadowFullSize,
+				}, { Time = 0.22 })
+			end
 		end)
 	end
 
@@ -318,10 +365,16 @@ end
 
 function Window:SetSize(Size)
 	self.Frame.Size = Size
+	if self.Shadow then
+		self.Shadow.Size = Size + UDim2.new(0, 22, 0, 22)
+	end
 end
 
 function Window:SetPosition(Position)
 	self.Frame.Position = Position
+	if self.Shadow then
+		self.Shadow.Position = Position
+	end
 end
 
 function Window:SetTheme(Name)
@@ -351,6 +404,8 @@ function Window:Destroy()
 		self.Gui:Destroy()
 		self.Gui = nil
 	end
+
+	self.Shadow = nil
 end
 
 return Window
