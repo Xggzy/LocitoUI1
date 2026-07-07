@@ -27,8 +27,10 @@ function Window.new(Settings)
 
 	local Gui = Utility:Create("ScreenGui", {
 		Name = Settings.GuiName or "LocitoUI",
+		Enabled = true,
 		ResetOnSpawn = false,
 		IgnoreGuiInset = true,
+		DisplayOrder = Settings.DisplayOrder or 999999,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 		Parent = ParentGui,
 	})
@@ -110,7 +112,7 @@ function Window.new(Settings)
 		Size = UDim2.new(0, 28, 0, 28),
 		BackgroundColor3 = CurrentTheme.Surface,
 		Font = Enum.Font.GothamBold,
-		Text = "×",
+		Text = "X",
 		TextColor3 = CurrentTheme.SubText,
 		TextSize = 16,
 		AutoButtonColor = false,
@@ -127,7 +129,7 @@ function Window.new(Settings)
 		Size = UDim2.new(0, 28, 0, 28),
 		BackgroundColor3 = CurrentTheme.Surface,
 		Font = Enum.Font.GothamBold,
-		Text = "–",
+		Text = "-",
 		TextColor3 = CurrentTheme.SubText,
 		TextSize = 16,
 		AutoButtonColor = false,
@@ -214,8 +216,12 @@ function Window.new(Settings)
 		end)
 	end
 
-	Main.Size = UDim2.new(0, 0, 0, 0)
-	Animation:Play(Main, { Size = FullSize }, { Time = 0.32 })
+	if Settings.Animate == false then
+		Main.Size = FullSize
+	else
+		Main.Size = UDim2.new(0, 0, 0, 0)
+		Animation:Play(Main, { Size = FullSize }, { Time = 0.32 })
+	end
 
 	return self
 end
