@@ -100,6 +100,8 @@ local Window = LocitoUI.new({
     Name = "Locito",
     Subtitle = "Phantom preset",
     Theme = "Phantom",
+    LogoText = "LC",
+    -- LogoImage = "rbxassetid://123456789",
     Width = 620,
     Height = 390,
     SidebarWidth = 138,
@@ -112,8 +114,23 @@ local Window = LocitoUI.new({
     TabIndicatorHeight = 18,
     TabSelectedTransparency = 0.08,
     Shadow = true,
+    ToggleKey = "RightControl",
+    ToggleAnimationTime = 0.18,
 })
 ```
+
+You can also change these at runtime:
+
+```lua
+Window:SetLogoText("LC")
+Window:SetLogoImage("rbxassetid://123456789")
+Window:SetToggleKey("RightControl")
+Window:Hide()
+Window:Show()
+Window:Toggle()
+```
+
+The included demo also has a `Menu key` keybind control that updates `Window:SetToggleKey(...)` while the UI is running.
 
 ```lua
 LocitoUI:AddTheme("Candy", {

@@ -7,6 +7,7 @@ local Window = LocitoUI.new({
     Name = "Locito Hub",
     Subtitle = "Original UI library",
     LogoText = "L",
+    -- LogoImage = "rbxassetid://123456789",
     Width = 680,
     Height = 450,
     SidebarWidth = 160,
@@ -15,6 +16,8 @@ local Window = LocitoUI.new({
     Draggable = true,
     CloseButton = true,
     MinimizeButton = true,
+    ToggleKey = "RightControl",
+    ToggleAnimationTime = 0.2,
 })
 ```
 
@@ -26,6 +29,12 @@ Window:SetSubtitle("New subtitle")
 Window:SetSize(UDim2.new(0, 560, 0, 360))
 Window:SetPosition(UDim2.new(0.5, 0, 0.5, 0))
 Window:SetTheme("Ocean")
+Window:SetLogoText("LC")
+Window:SetLogoImage("rbxassetid://123456789")
+Window:SetToggleKey("RightControl")
+Window:Hide()
+Window:Show()
+Window:Toggle()
 ```
 
 ## Themes
@@ -63,6 +72,8 @@ Compact dark preset:
 local Window = LocitoUI.new({
     Name = "Locito",
     Theme = "Phantom",
+    LogoText = "LC",
+    ToggleKey = "RightControl",
     Width = 620,
     Height = 390,
     SidebarWidth = 138,
@@ -212,11 +223,11 @@ Section:Dropdown({
 
 ```lua
 Section:Keybind({
-    Text = "Toggle UI",
+    Text = "Menu key",
     Default = "RightControl",
     Callback = function(Key, ChangedBind)
-        if not ChangedBind then
-            Window:Toggle()
+        if ChangedBind then
+            Window:SetToggleKey(Key)
         end
     end,
 })

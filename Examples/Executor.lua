@@ -29,8 +29,8 @@ local Success, ErrorMessage = xpcall(function()
 
 	local Window = LocitoUI.new({
 		Name = "Locito",
-		Subtitle = "Phantom preset",
-		LogoText = "L",
+		Subtitle = "RightControl toggles menu",
+		LogoText = "LC",
 		Theme = "Phantom",
 		Parent = Parent,
 		Width = 620,
@@ -47,8 +47,10 @@ local Success, ErrorMessage = xpcall(function()
 		TabHoverTransparency = 0.55,
 		Shadow = true,
 		ShadowTransparency = 0.5,
+		ToggleKey = "RightControl",
+		ToggleAnimationTime = 0.18,
 		DisplayOrder = 999999,
-		Animate = false,
+		Animate = true,
 	})
 
 	local Home = Window:CreateTab("Home", "H")
@@ -61,15 +63,15 @@ local Success, ErrorMessage = xpcall(function()
 
 	Main:Paragraph({
 		Title = "LocitoUI loaded",
-		Body = "If you can see this, the standalone bundle is working.",
+		Body = "RightControl toggles this menu. The logo, theme, tabs, and animation are all customizable.",
 	})
 
 	Main:Button({
-		Text = "Show notification",
+		Text = "Hide menu",
 		Style = "Accent",
 		Height = 34,
 		Callback = function()
-			Window:Notify("LocitoUI", "Notifications are working.", 4, "Success")
+			Window:Hide()
 		end,
 	})
 
@@ -111,6 +113,17 @@ local Success, ErrorMessage = xpcall(function()
 		Default = "Phantom",
 		Changed = function(Name)
 			LocitoUI:SetTheme(Name)
+		end,
+	})
+
+	ThemeSection:Keybind({
+		Text = "Menu key",
+		Default = "RightControl",
+		Changed = function(Key, IsNewBind)
+			if IsNewBind then
+				Window:SetToggleKey(Key)
+				Window:Notify("Menu key", "Toggle key set to " .. Key, 2, "Success")
+			end
 		end,
 	})
 end, function(Message)

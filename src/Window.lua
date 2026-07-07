@@ -5,12 +5,39 @@ local Window = {}
 Window.__index = Window
 
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 
 local Utility = require(script.Parent.Utility)
 local Theme = require(script.Parent.Theme)
 local Animation = require(script.Parent.Animation)
 local Notification = require(script.Parent.Notification)
 local Tab = require(script.Parent.Components.Tab)
+
+local function ResolveKeyCode(Key)
+	if typeof(Key) == "EnumItem" then
+		return Key
+	end
+
+	if typeof(Key) == "string" then
+		local KeyName = Key:gsub("%s+", "")
+		local Success, KeyCode = pcall(function()
+			return Enum.KeyCode[KeyName]
+		end)
+
+		if Success and KeyCode then
+			return KeyCode
+		end
+
+		local LowerKeyName = KeyName:lower()
+		for _, EnumItem in ipairs(Enum.KeyCode:GetEnumItems()) do
+			if EnumItem.Name:lower() == LowerKeyName then
+				return EnumItem
+			end
+		end
+	end
+
+	return nil
+end
 
 function Window.new(Settings)
 	Settings = Settings or {}
@@ -26,6 +53,7 @@ function Window.new(Settings)
 	local self = setmetatable({}, Window)
 	self.Settings = Settings
 	self.Tabs = {}
+	self.Connections = {}
 	self.ActiveTab = nil
 	self.Visible = true
 
@@ -51,6 +79,8 @@ function Window.new(Settings)
 	local MainAnchor = Settings.AnchorPoint or Vector2.new(0.5, 0.5)
 	local MainPosition = Settings.Position or UDim2.new(0.5, 0, 0.5, 0)
 	local Radius = Settings.Radius or CurrentTheme.CornerRadius
+	local ShadowPadding = Settings.ShadowPadding or 22
+	local ToggleTime = Settings.ToggleTime or Settings.ToggleAnimationTime or 0.2
 
 	local Gui = Utility:Create("ScreenGui", {
 		Name = Settings.GuiName or "LocitoUI",
@@ -62,6 +92,12 @@ function Window.new(Settings)
 		Parent = ParentGui,
 	})
 	self.Gui = Gui
+	self.FullSize = WindowSize
+	self.CustomHiddenSize = Settings.HiddenSize ~= nil
+	self.HiddenSize = Settings.HiddenSize or UDim2.new(WindowSize.X.Scale, WindowSize.X.Offset, 0, 0)
+	self.ToggleTime = ToggleTime
+	self.ToggleKey = ResolveKeyCode(Settings.ToggleKey or Settings.ToggleKeybind or Settings.MenuKeybind)
+	self.ShadowPadding = ShadowPadding
 
 	local Shadow
 	if Settings.Shadow ~= false then
@@ -69,7 +105,7 @@ function Window.new(Settings)
 			Name = "Shadow",
 			AnchorPoint = MainAnchor,
 			Position = Settings.ShadowPosition or MainPosition,
-			Size = Settings.ShadowSize or (WindowSize + UDim2.new(0, 22, 0, 22)),
+			Size = Settings.ShadowSize or (WindowSize + UDim2.new(0, ShadowPadding, 0, ShadowPadding)),
 			BackgroundColor3 = CurrentTheme.Shadow or Color3.fromRGB(0, 0, 0),
 			BackgroundTransparency = Settings.ShadowTransparency or 0.48,
 			BorderSizePixel = 0,
@@ -80,6 +116,8 @@ function Window.new(Settings)
 		Theme:Register(Shadow, "BackgroundColor3", "Shadow")
 	end
 	self.Shadow = Shadow
+	self.ShadowFullSize = Shadow and Shadow.Size
+	self.ShadowHiddenSize = Shadow and UDim2.new(WindowSize.X.Scale, WindowSize.X.Offset + ShadowPadding, 0, ShadowPadding)
 
 	local Main = Utility:Create("Frame", {
 		Name = "MainWindow",
@@ -131,15 +169,29 @@ function Window.new(Settings)
 		Size = UDim2.new(0, 32, 0, 32),
 		Visible = Settings.Logo ~= false,
 		Font = Settings.LogoFont or Enum.Font.GothamBold,
-		Text = Settings.LogoText or "L",
+		Text = (Settings.LogoImage or Settings.LogoId) and "" or (Settings.LogoText or "L"),
 		TextColor3 = CurrentTheme.AccentLight,
 		TextSize = Settings.LogoTextSize or 18,
 		Parent = TopBar,
 	})
-	Utility:Round(Logo, 10)
+	Utility:Round(Logo, Settings.LogoRadius or 10)
 	Theme:Register(Logo, "BackgroundColor3", "Surface")
 	Theme:Register(Logo, "TextColor3", "AccentLight")
 	self.Logo = Logo
+
+	if Settings.LogoImage or Settings.LogoId then
+		local LogoImage = Utility:Create("ImageLabel", {
+			Name = "LogoImage",
+			BackgroundTransparency = 1,
+			Position = UDim2.new(0, 5, 0, 5),
+			Size = UDim2.new(1, -10, 1, -10),
+			Image = Settings.LogoImage or Settings.LogoId,
+			ImageColor3 = Settings.LogoImageColor or Color3.fromRGB(255, 255, 255),
+			ScaleType = Settings.LogoScaleType or Enum.ScaleType.Fit,
+			Parent = Logo,
+		})
+		self.LogoImage = LogoImage
+	end
 
 	local Title = Utility:Create("TextLabel", {
 		Name = "Title",
@@ -277,21 +329,28 @@ function Window.new(Settings)
 	end
 
 	local Minimized = false
-	local FullSize = Main.Size
-	local ShadowFullSize = Shadow and Shadow.Size
 	if ShowMinimize then
 		Minimize.MouseButton1Click:Connect(function()
 			Minimized = not Minimized
 			Animation:Play(Main, {
-				Size = Minimized and UDim2.new(0, FullSize.X.Offset, 0, TopBarHeight) or FullSize,
+				Size = Minimized and UDim2.new(self.FullSize.X.Scale, self.FullSize.X.Offset, 0, TopBarHeight) or self.FullSize,
 			}, { Time = 0.22 })
-			if Shadow and ShadowFullSize then
+			if Shadow and self.ShadowFullSize then
 				Animation:Play(Shadow, {
-					Size = Minimized and UDim2.new(0, FullSize.X.Offset + 22, 0, TopBarHeight + 22) or ShadowFullSize,
+					Size = Minimized and UDim2.new(self.ShadowFullSize.X.Scale, self.ShadowFullSize.X.Offset, 0, TopBarHeight + ShadowPadding) or self.ShadowFullSize,
 				}, { Time = 0.22 })
 			end
 		end)
 	end
+
+	table.insert(self.Connections, UserInputService.InputBegan:Connect(function(Input, Processed)
+		if not self.ToggleKey then return end
+		if Processed and Settings.ToggleIgnoresProcessedInput ~= true then return end
+		if Input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+		if Input.KeyCode == self.ToggleKey then
+			self:Toggle()
+		end
+	end))
 
 	for _, Button in ipairs({ Close, Minimize }) do
 		Button.MouseEnter:Connect(function()
@@ -303,10 +362,19 @@ function Window.new(Settings)
 	end
 
 	if Settings.Animate == false then
-		Main.Size = FullSize
+		Main.Size = self.FullSize
+		if Shadow and self.ShadowFullSize then
+			Shadow.Size = self.ShadowFullSize
+		end
 	else
-		Main.Size = UDim2.new(0, 0, 0, 0)
-		Animation:Play(Main, { Size = FullSize }, { Time = 0.32 })
+		Main.Size = self.HiddenSize
+		if Shadow and self.ShadowHiddenSize then
+			Shadow.Size = self.ShadowHiddenSize
+		end
+		Animation:Play(Main, { Size = self.FullSize }, { Time = 0.32 })
+		if Shadow and self.ShadowFullSize then
+			Animation:Play(Shadow, { Size = self.ShadowFullSize }, { Time = 0.32 })
+		end
 	end
 
 	return self
@@ -346,9 +414,66 @@ function Window:Notify(Title, Message, Duration, Kind)
 	})
 end
 
-function Window:Toggle()
-	self.Visible = not self.Visible
-	self.Frame.Visible = self.Visible
+function Window:SetVisible(Visible, Animated)
+	if self.Destroyed or not self.Frame then
+		return
+	end
+
+	if self.Visible == Visible then
+		return
+	end
+
+	self.Visible = Visible
+	local ShouldAnimate = Animated ~= false and self.Settings.ToggleAnimation ~= false
+
+	if Visible then
+		self.Frame.Visible = true
+		self.Frame.Size = ShouldAnimate and self.HiddenSize or self.FullSize
+		if self.Shadow then
+			self.Shadow.Visible = true
+			self.Shadow.Size = ShouldAnimate and self.ShadowHiddenSize or self.ShadowFullSize
+		end
+
+		if ShouldAnimate then
+			Animation:Play(self.Frame, { Size = self.FullSize }, { Time = self.ToggleTime })
+			if self.Shadow and self.ShadowFullSize then
+				Animation:Play(self.Shadow, { Size = self.ShadowFullSize }, { Time = self.ToggleTime })
+			end
+		end
+	else
+		if ShouldAnimate then
+			Animation:Play(self.Frame, { Size = self.HiddenSize }, { Time = self.ToggleTime })
+			if self.Shadow and self.ShadowHiddenSize then
+				Animation:Play(self.Shadow, { Size = self.ShadowHiddenSize }, { Time = self.ToggleTime })
+			end
+
+			task.delay(self.ToggleTime + 0.03, function()
+				if not self.Visible and self.Frame then
+					self.Frame.Visible = false
+				end
+				if not self.Visible and self.Shadow then
+					self.Shadow.Visible = false
+				end
+			end)
+		else
+			self.Frame.Visible = false
+			if self.Shadow then
+				self.Shadow.Visible = false
+			end
+		end
+	end
+end
+
+function Window:Show(Animated)
+	self:SetVisible(true, Animated)
+end
+
+function Window:Hide(Animated)
+	self:SetVisible(false, Animated)
+end
+
+function Window:Toggle(Animated)
+	self:SetVisible(not self.Visible, Animated)
 end
 
 function Window:SetTitle(Text)
@@ -364,9 +489,15 @@ function Window:SetSubtitle(Text)
 end
 
 function Window:SetSize(Size)
-	self.Frame.Size = Size
+	self.FullSize = Size
+	if not self.CustomHiddenSize then
+		self.HiddenSize = UDim2.new(Size.X.Scale, Size.X.Offset, 0, 0)
+	end
+	self.Frame.Size = self.Visible and Size or self.HiddenSize
 	if self.Shadow then
-		self.Shadow.Size = Size + UDim2.new(0, 22, 0, 22)
+		self.ShadowFullSize = Size + UDim2.new(0, self.ShadowPadding, 0, self.ShadowPadding)
+		self.ShadowHiddenSize = UDim2.new(Size.X.Scale, Size.X.Offset + self.ShadowPadding, 0, self.ShadowPadding)
+		self.Shadow.Size = self.Visible and self.ShadowFullSize or self.ShadowHiddenSize
 	end
 end
 
@@ -381,6 +512,46 @@ function Window:SetTheme(Name)
 	return Theme:Set(Name)
 end
 
+function Window:SetLogoText(Text)
+	if self.Logo then
+		self.Logo.Text = Text
+		self.Logo.Visible = true
+	end
+	if self.LogoImage then
+		self.LogoImage.Visible = false
+	end
+end
+
+function Window:SetLogoImage(Image, Color)
+	if not self.Logo then
+		return
+	end
+
+	self.Logo.Visible = true
+	self.Logo.Text = ""
+
+	if not self.LogoImage then
+		self.LogoImage = Utility:Create("ImageLabel", {
+			Name = "LogoImage",
+			BackgroundTransparency = 1,
+			Position = UDim2.new(0, 5, 0, 5),
+			Size = UDim2.new(1, -10, 1, -10),
+			ScaleType = Enum.ScaleType.Fit,
+			Parent = self.Logo,
+		})
+	end
+
+	self.LogoImage.Visible = true
+	self.LogoImage.Image = Image
+	if Color then
+		self.LogoImage.ImageColor3 = Color
+	end
+end
+
+function Window:SetToggleKey(Key)
+	self.ToggleKey = ResolveKeyCode(Key)
+end
+
 function Window:Destroy()
 	if self.Destroyed then
 		return
@@ -391,6 +562,11 @@ function Window:Destroy()
 		self.DragDisconnect()
 		self.DragDisconnect = nil
 	end
+
+	for _, Connection in ipairs(self.Connections) do
+		Connection:Disconnect()
+	end
+	self.Connections = {}
 
 	for _, TabObject in ipairs(self.Tabs) do
 		if TabObject.Destroy then
