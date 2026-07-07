@@ -53,7 +53,12 @@ LocitoUI
 │       ├── Section.lua
 │       └── Tab.lua
 ├── Examples
+│   ├── Executor.lua
 │   └── Test.lua
+├── dist
+│   └── LocitoUI.lua
+├── tools
+│   └── build_standalone.py
 └── Docs
     └── API.md
 ```
@@ -80,6 +85,67 @@ Movement:Button({
     Callback = function()
         print("Hello from LocitoUI")
     end,
+})
+```
+
+## Customization
+
+You can add themes, adjust the window layout, and customize individual controls.
+
+```lua
+LocitoUI:AddTheme("Candy", {
+    Background = Color3.fromRGB(18, 12, 20),
+    Secondary = Color3.fromRGB(28, 19, 31),
+    Surface = Color3.fromRGB(39, 27, 44),
+    SurfaceLight = Color3.fromRGB(53, 35, 61),
+    Accent = Color3.fromRGB(255, 120, 210),
+    AccentLight = Color3.fromRGB(255, 174, 230),
+    Text = Color3.fromRGB(255, 246, 252),
+    SubText = Color3.fromRGB(214, 178, 204),
+    Muted = Color3.fromRGB(116, 82, 108),
+    Border = Color3.fromRGB(92, 58, 86),
+}, "Nebula")
+
+local Window = LocitoUI.new({
+    Name = "Custom Hub",
+    Theme = "Candy",
+    Width = 560,
+    Height = 360,
+    SidebarWidth = 130,
+    Padding = 12,
+    Gap = 10,
+    Animate = false,
+})
+
+local Main = Window:CreateTab("Main"):CreateSection({
+    Name = "Tuned Controls",
+    Padding = 10,
+    ItemSpacing = 6,
+})
+
+Main:Button({
+    Text = "Accent button",
+    Style = "Accent",
+    Height = 34,
+})
+
+Main:Slider({
+    Text = "Walk speed",
+    Min = 16,
+    Max = 100,
+    Default = 32,
+    Step = 2,
+    Suffix = " studs",
+})
+
+Main:ColorPicker({
+    Text = "Accent",
+    ApplyToTheme = true,
+    Presets = {
+        Color3.fromRGB(255, 120, 210),
+        Color3.fromRGB(0, 157, 255),
+        Color3.fromRGB(39, 212, 121),
+    },
 })
 ```
 

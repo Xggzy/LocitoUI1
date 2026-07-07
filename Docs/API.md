@@ -7,7 +7,46 @@ local Window = LocitoUI.new({
     Name = "Locito Hub",
     Subtitle = "Original UI library",
     LogoText = "L",
+    Width = 680,
+    Height = 450,
+    SidebarWidth = 160,
+    Padding = 14,
+    Gap = 14,
+    Draggable = true,
+    CloseButton = true,
+    MinimizeButton = true,
 })
+```
+
+Runtime helpers:
+
+```lua
+Window:SetTitle("New title")
+Window:SetSubtitle("New subtitle")
+Window:SetSize(UDim2.new(0, 560, 0, 360))
+Window:SetPosition(UDim2.new(0.5, 0, 0.5, 0))
+Window:SetTheme("Ocean")
+```
+
+## Themes
+
+```lua
+LocitoUI:AddTheme("Candy", {
+    Background = Color3.fromRGB(18, 12, 20),
+    Secondary = Color3.fromRGB(28, 19, 31),
+    Surface = Color3.fromRGB(39, 27, 44),
+    SurfaceLight = Color3.fromRGB(53, 35, 61),
+    Accent = Color3.fromRGB(255, 120, 210),
+    AccentLight = Color3.fromRGB(255, 174, 230),
+    Text = Color3.fromRGB(255, 246, 252),
+    SubText = Color3.fromRGB(214, 178, 204),
+    Muted = Color3.fromRGB(116, 82, 108),
+    Border = Color3.fromRGB(92, 58, 86),
+}, "Nebula")
+
+LocitoUI:SetTheme("Candy")
+LocitoUI:SetAccent(Color3.fromRGB(0, 157, 255))
+print(table.concat(LocitoUI:GetThemes(), ", "))
 ```
 
 ## Loadstring
@@ -42,7 +81,12 @@ Window:Page("Home")
 ## Sections
 
 ```lua
-local Section = Tab:CreateSection("Main")
+local Section = Tab:CreateSection({
+    Name = "Main",
+    Padding = 10,
+    ItemSpacing = 6,
+    ShowTitle = true,
+})
 ```
 
 Alias:
@@ -56,10 +100,20 @@ Tab:Section("Main")
 ```lua
 Section:Button({
     Text = "Click me",
+    Height = 34,
+    Style = "Accent",
     Callback = function()
         print("Clicked")
     end,
 })
+```
+
+Methods:
+
+```lua
+Button:SetText("New text")
+Button:SetCallback(function() end)
+Button:SetEnabled(false)
 ```
 
 ## Toggle
@@ -85,10 +139,20 @@ local Slider = Section:Slider({
     Min = 0,
     Max = 100,
     Default = 50,
+    Step = 5,
+    Suffix = "%",
     Changed = function(Value)
         print(Value)
     end,
 })
+```
+
+Methods:
+
+```lua
+Slider:Set(75)
+Slider:SetBounds(0, 200)
+print(Slider:Get())
 ```
 
 ## Textbox
@@ -134,6 +198,12 @@ Section:Keybind({
 ```lua
 Section:ColorPicker({
     Text = "Accent",
+    ApplyToTheme = true,
+    Presets = {
+        Color3.fromRGB(155, 90, 255),
+        Color3.fromRGB(0, 157, 255),
+        Color3.fromRGB(39, 212, 121),
+    },
     Changed = function(Color)
         print(Color)
     end,

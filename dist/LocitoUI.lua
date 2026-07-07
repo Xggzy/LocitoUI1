@@ -241,6 +241,38 @@ function Theme:GetTheme(Name)
 	return self.Themes[Name]
 end
 
+function Theme:GetThemes()
+	local Names = {}
+	for Name in pairs(self.Themes) do
+		table.insert(Names, Name)
+	end
+	table.sort(Names)
+	return Names
+end
+
+function Theme:_Copy(Source)
+	local Result = {}
+	for Key, Value in pairs(Source or {}) do
+		Result[Key] = Value
+	end
+	return Result
+end
+
+function Theme:Add(Name, Values, BaseName)
+	if typeof(Name) ~= "string" or Name == "" or typeof(Values) ~= "table" then
+		return false
+	end
+
+	local Base = self.Themes[BaseName] or self:Get()
+	local NewTheme = self:_Copy(Base)
+	for Key, Value in pairs(Values) do
+		NewTheme[Key] = Value
+	end
+
+	self.Themes[Name] = NewTheme
+	return true
+end
+
 function Theme:Set(Name)
 	if not self.Themes[Name] then
 		return false
@@ -251,6 +283,19 @@ function Theme:Set(Name)
 
 	for _, Listener in ipairs(self.Listeners) do
 		task.spawn(Listener, self:Get(), Name)
+	end
+
+	return true
+end
+
+function Theme:SetAccent(Color, AccentLight)
+	local Current = self:Get()
+	Current.Accent = Color
+	Current.AccentLight = AccentLight or Color
+	self:Apply()
+
+	for _, Listener in ipairs(self.Listeners) do
+		task.spawn(Listener, Current, self.Current)
 	end
 
 	return true
@@ -496,34 +541,46 @@ function Button.new(Section, Options)
 
 	local CurrentTheme = Theme:Get()
 	self.Callback = Options.Callback or function() end
+	self.Enabled = Options.Enabled ~= false
+	local Style = Options.Style or (Options.Accent and "Accent") or "Secondary"
+	local BackgroundKey = Style == "Accent" and "Accent" or "Secondary"
+	local TextKey = Style == "Accent" and "Text" or "Text"
 
 	local Object = Utility:Create("TextButton", {
 		Name = "Button",
-		Size = UDim2.new(1, 0, 0, 38),
-		BackgroundColor3 = CurrentTheme.Secondary,
+		Size = Options.Size or UDim2.new(1, 0, 0, Options.Height or 38),
+		BackgroundColor3 = Options.BackgroundColor or CurrentTheme[BackgroundKey],
 		BorderSizePixel = 0,
-		Font = Enum.Font.GothamMedium,
+		Font = Options.Font or Enum.Font.GothamMedium,
 		Text = Options.Text or Options.Name or "Button",
-		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextColor3 = Options.TextColor or CurrentTheme[TextKey],
+		TextSize = Options.TextSize or 14,
+		TextTransparency = self.Enabled and 0 or 0.45,
 		AutoButtonColor = false,
 		Parent = Section.Body,
 	})
-	Utility:Round(Object, 9)
+	Utility:Round(Object, Options.Radius or 9)
 	local Stroke = Utility:Stroke(Object, CurrentTheme.Border, 1, 0.25)
-	Theme:Register(Object, "BackgroundColor3", "Secondary")
-	Theme:Register(Object, "TextColor3", "Text")
+	if not Options.BackgroundColor then
+		Theme:Register(Object, "BackgroundColor3", BackgroundKey)
+	end
+	if not Options.TextColor then
+		Theme:Register(Object, "TextColor3", TextKey)
+	end
 	Theme:Register(Stroke, "Color", "Border")
 
 	Object.MouseEnter:Connect(function()
+		if not self.Enabled then return end
 		Animation:Play(Object, { BackgroundColor3 = Theme:Get().SurfaceLight }, { Time = 0.12 })
 	end)
 
 	Object.MouseLeave:Connect(function()
-		Animation:Play(Object, { BackgroundColor3 = Theme:Get().Secondary }, { Time = 0.12 })
+		if not self.Enabled then return end
+		Animation:Play(Object, { BackgroundColor3 = Options.BackgroundColor or Theme:Get()[BackgroundKey] }, { Time = 0.12 })
 	end)
 
 	Object.MouseButton1Click:Connect(function()
+		if not self.Enabled then return end
 		Animation:Pop(Object)
 		Utility:SafeCall(self.Callback)
 	end)
@@ -534,6 +591,15 @@ end
 
 function Button:SetText(Text)
 	self.Object.Text = Text
+end
+
+function Button:SetCallback(Callback)
+	self.Callback = Callback
+end
+
+function Button:SetEnabled(Enabled)
+	self.Enabled = Enabled == true
+	self.Object.TextTransparency = self.Enabled and 0 or 0.45
 end
 
 function Button:Destroy()
@@ -699,6 +765,10 @@ function Slider.new(Section, Options)
 	self.Value = math.clamp(Options.Default or Options.Value or self.Min, self.Min, self.Max)
 	self.Changed = Options.Changed or Options.Callback or function() end
 	self.Decimals = Options.Decimals or 0
+	self.Step = Options.Step or Options.Increment or 0
+	self.Prefix = Options.Prefix or ""
+	self.Suffix = Options.Suffix or ""
+	self.Format = Options.Format
 	self.Range = self.Max - self.Min
 	self.Connections = {}
 
@@ -706,7 +776,7 @@ function Slider.new(Section, Options)
 
 	local Row = Utility:Create("Frame", {
 		Name = "Slider",
-		Size = UDim2.new(1, 0, 0, 56),
+		Size = Options.Size or UDim2.new(1, 0, 0, Options.Height or 56),
 		BackgroundColor3 = CurrentTheme.Secondary,
 		BorderSizePixel = 0,
 		Parent = Section.Body,
@@ -746,7 +816,7 @@ function Slider.new(Section, Options)
 	local Track = Utility:Create("Frame", {
 		Name = "Track",
 		Position = UDim2.new(0, 12, 0, 36),
-		Size = UDim2.new(1, -24, 0, 8),
+		Size = UDim2.new(1, -24, 0, Options.TrackHeight or 8),
 		BackgroundColor3 = CurrentTheme.Border,
 		BorderSizePixel = 0,
 		Parent = Row,
@@ -783,16 +853,29 @@ function Slider.new(Section, Options)
 	local Dragging = false
 
 	local function RoundValue(Value)
+		if self.Step > 0 then
+			Value = self.Min + math.floor(((Value - self.Min) / self.Step) + 0.5) * self.Step
+		end
+
 		local Multiplier = 10 ^ self.Decimals
 		return math.floor(Value * Multiplier + 0.5) / Multiplier
+	end
+
+	local function FormatValue(Value)
+		if typeof(self.Format) == "function" then
+			return tostring(self.Format(Value))
+		end
+
+		return self.Prefix .. tostring(Value) .. self.Suffix
 	end
 
 	function self:UpdateFromRatio(Ratio, SkipCallback)
 		Ratio = math.clamp(Ratio, 0, 1)
 		self.Value = RoundValue(self.Min + self.Range * Ratio)
-		ValueLabel.Text = tostring(self.Value)
-		Fill.Size = UDim2.new(Ratio, 0, 1, 0)
-		Knob.Position = UDim2.new(Ratio, 0, 0.5, 0)
+		local VisualRatio = self.Range == 0 and 0 or (self.Value - self.Min) / self.Range
+		ValueLabel.Text = FormatValue(self.Value)
+		Fill.Size = UDim2.new(VisualRatio, 0, 1, 0)
+		Knob.Position = UDim2.new(VisualRatio, 0, 0.5, 0)
 		if not SkipCallback then
 			Utility:SafeCall(self.Changed, self.Value)
 		end
@@ -840,6 +923,17 @@ function Slider:Get()
 	return self.Value
 end
 
+function Slider:SetBounds(Min, Max)
+	if Max < Min then
+		Min, Max = Max, Min
+	end
+
+	self.Min = Min
+	self.Max = Max
+	self.Range = self.Max - self.Min
+	self:Set(self.Value)
+end
+
 function Slider:Destroy()
 	if self.Destroyed then
 		return
@@ -864,22 +958,25 @@ Label.__index = Label
 
 
 function Label.new(Section, Text)
+	local Options = typeof(Text) == "table" and Text or { Text = Text }
 	local self = setmetatable({}, Label)
 	local CurrentTheme = Theme:Get()
 
 	local Object = Utility:Create("TextLabel", {
 		Name = "Label",
-		Size = UDim2.new(1, 0, 0, 22),
+		Size = Options.Size or UDim2.new(1, 0, 0, Options.Height or 22),
 		BackgroundTransparency = 1,
-		Font = Enum.Font.Gotham,
-		Text = typeof(Text) == "table" and (Text.Text or "Label") or (Text or "Label"),
-		TextColor3 = CurrentTheme.SubText,
-		TextSize = 13,
-		TextXAlignment = Enum.TextXAlignment.Left,
+		Font = Options.Font or Enum.Font.Gotham,
+		Text = Options.Text or "Label",
+		TextColor3 = Options.TextColor or CurrentTheme.SubText,
+		TextSize = Options.TextSize or 13,
+		TextXAlignment = Options.Alignment or Options.TextXAlignment or Enum.TextXAlignment.Left,
 		TextWrapped = true,
 		Parent = Section.Body,
 	})
-	Theme:Register(Object, "TextColor3", "SubText")
+	if not Options.TextColor then
+		Theme:Register(Object, "TextColor3", Options.ThemeKey or "SubText")
+	end
 
 	self.Object = Object
 	return self
@@ -1379,7 +1476,11 @@ local Presets = {
 function ColorPicker.new(Section, Options)
 	Options = Options or {}
 	local self = setmetatable({}, ColorPicker)
-	self.Value = Options.Default or Presets[1]
+	self.Presets = Options.Presets or Options.Colors or Presets
+	if #self.Presets == 0 then
+		self.Presets = Presets
+	end
+	self.Value = Options.Default or self.Presets[1]
 	self.Changed = Options.Changed or Options.Callback or function() end
 	self.Open = false
 
@@ -1442,9 +1543,9 @@ function ColorPicker.new(Section, Options)
 	})
 	Utility:List(Palette, 6, Enum.FillDirection.Horizontal)
 
-	for _, Color in ipairs(Presets) do
+	for _, Color in ipairs(self.Presets) do
 		local Swatch = Utility:Create("TextButton", {
-			Size = UDim2.new(0, 28, 0, 28),
+			Size = UDim2.new(0, Options.SwatchSize or 28, 0, Options.SwatchSize or 28),
 			BackgroundColor3 = Color,
 			BorderSizePixel = 0,
 			Text = "",
@@ -1457,6 +1558,13 @@ function ColorPicker.new(Section, Options)
 
 		Swatch.MouseButton1Click:Connect(function()
 			self:Set(Color)
+			if Options.ApplyToTheme then
+				Theme:SetAccent(Color)
+			end
+			if Options.CloseOnSelect then
+				self.Open = false
+				Palette.Visible = false
+			end
 		end)
 	end
 
@@ -1494,7 +1602,13 @@ Section.__index = Section
 
 
 
-function Section.new(Tab, Name)
+function Section.new(Tab, Name, Options)
+	if typeof(Name) == "table" then
+		Options = Name
+		Name = Options.Name or Options.Title or "Section"
+	end
+	Options = Options or {}
+
 	local self = setmetatable({}, Section)
 	self.Tab = Tab
 	self.Name = Name
@@ -1504,29 +1618,31 @@ function Section.new(Tab, Name)
 
 	local Frame = Utility:Create("Frame", {
 		Name = Name .. "Section",
-		Size = UDim2.new(1, -6, 0, 0),
+		Size = Options.Size or UDim2.new(1, Options.WidthOffset or -6, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = CurrentTheme.Surface,
+		BackgroundTransparency = Options.Transparency or Options.BackgroundTransparency or 0,
 		BorderSizePixel = 0,
 		Parent = Tab.Page,
 	})
-	Utility:Round(Frame, 12)
+	Utility:Round(Frame, Options.Radius or CurrentTheme.CornerRadius or 12)
 	local Stroke = Utility:Stroke(Frame, CurrentTheme.Border, 1, 0.15)
-	Utility:Padding(Frame, 12)
+	Utility:Padding(Frame, Options.Padding or 12)
 	Theme:Register(Frame, "BackgroundColor3", "Surface")
 	Theme:Register(Stroke, "Color", "Border")
 
-	local Layout = Utility:List(Frame, 8)
+	local Layout = Utility:List(Frame, Options.Spacing or 8)
 
 	local Title = Utility:Create("TextLabel", {
 		Name = "Title",
 		LayoutOrder = 1,
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, 20),
-		Font = Enum.Font.GothamBold,
+		Size = UDim2.new(1, 0, 0, Options.TitleHeight or 20),
+		Visible = Options.ShowTitle ~= false,
+		Font = Options.TitleFont or Enum.Font.GothamBold,
 		Text = Name,
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextSize = Options.TitleSize or 14,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Frame,
 	})
@@ -1534,13 +1650,13 @@ function Section.new(Tab, Name)
 
 	local Body = Utility:Create("Frame", {
 		Name = "Body",
-		LayoutOrder = 2,
+		LayoutOrder = Options.ShowTitle == false and 1 or 2,
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
 		Parent = Frame,
 	})
-	local BodyLayout = Utility:List(Body, 8)
+	local BodyLayout = Utility:List(Body, Options.ItemSpacing or Options.Spacing or 8)
 
 	self.Frame = Frame
 	self.Body = Body
@@ -1728,8 +1844,8 @@ function Tab:_SetSelected(IsSelected)
 	end
 end
 
-function Tab:CreateSection(Name)
-	local NewSection = Section.new(self, Name)
+function Tab:CreateSection(Name, Options)
+	local NewSection = Section.new(self, Name, Options)
 	table.insert(self.Sections, NewSection)
 	return NewSection
 end
@@ -1776,6 +1892,14 @@ local Players = game:GetService("Players")
 function Window.new(Settings)
 	Settings = Settings or {}
 
+	if Settings.CustomTheme then
+		local ThemeName = Settings.Theme or Settings.ThemeName or "Custom"
+		Theme:Add(ThemeName, Settings.CustomTheme, Settings.BaseTheme)
+		Theme:Set(ThemeName)
+	elseif Settings.Theme then
+		Theme:Set(Settings.Theme)
+	end
+
 	local self = setmetatable({}, Window)
 	self.Settings = Settings
 	self.Tabs = {}
@@ -1785,6 +1909,22 @@ function Window.new(Settings)
 	local CurrentTheme = Theme:Get()
 	local Player = Players.LocalPlayer
 	local ParentGui = Settings.Parent or (Player and Player:WaitForChild("PlayerGui"))
+	local WindowSize = Settings.Size or UDim2.new(0, Settings.Width or 680, 0, Settings.Height or 450)
+	local TopBarHeight = Settings.TopBarHeight or Settings.TopbarHeight or 56
+	local OuterPadding = Settings.Padding or 14
+	local Gap = Settings.Gap or 14
+	local ContentGap = Settings.ContentGap or 10
+	local SidebarWidth = Settings.SidebarWidth or 160
+	local HasSidebar = Settings.Sidebar ~= false
+	local ContentX = HasSidebar and (OuterPadding + SidebarWidth + Gap) or OuterPadding
+	local ContentTop = TopBarHeight + ContentGap
+	local ContentWidthOffset = HasSidebar and -(OuterPadding * 2 + SidebarWidth + Gap) or -(OuterPadding * 2)
+	local ContentHeightOffset = -(ContentTop + OuterPadding)
+	local ShowControls = Settings.Controls ~= false
+	local ShowClose = ShowControls and Settings.CloseButton ~= false
+	local ShowMinimize = ShowControls and Settings.MinimizeButton ~= false
+	local ControlReserve = ShowControls and 90 or 16
+	local TitleX = Settings.Logo == false and OuterPadding or (OuterPadding + 42)
 
 	local Gui = Utility:Create("ScreenGui", {
 		Name = Settings.GuiName or "LocitoUI",
@@ -1799,10 +1939,11 @@ function Window.new(Settings)
 
 	local Main = Utility:Create("Frame", {
 		Name = "MainWindow",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(0, Settings.Width or 680, 0, Settings.Height or 450),
+		AnchorPoint = Settings.AnchorPoint or Vector2.new(0.5, 0.5),
+		Position = Settings.Position or UDim2.new(0.5, 0, 0.5, 0),
+		Size = WindowSize,
 		BackgroundColor3 = CurrentTheme.Background,
+		BackgroundTransparency = Settings.Transparency or Settings.BackgroundTransparency or 0,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 		Parent = Gui,
@@ -1815,7 +1956,7 @@ function Window.new(Settings)
 
 	local TopBar = Utility:Create("Frame", {
 		Name = "TopBar",
-		Size = UDim2.new(1, 0, 0, 56),
+		Size = UDim2.new(1, 0, 0, TopBarHeight),
 		BackgroundColor3 = CurrentTheme.Background,
 		BorderSizePixel = 0,
 		Parent = Main,
@@ -1826,51 +1967,57 @@ function Window.new(Settings)
 	local Logo = Utility:Create("TextLabel", {
 		Name = "Logo",
 		BackgroundColor3 = CurrentTheme.Surface,
-		Position = UDim2.new(0, 14, 0, 12),
+		Position = UDim2.new(0, OuterPadding, 0, math.floor((TopBarHeight - 32) / 2)),
 		Size = UDim2.new(0, 32, 0, 32),
-		Font = Enum.Font.GothamBold,
+		Visible = Settings.Logo ~= false,
+		Font = Settings.LogoFont or Enum.Font.GothamBold,
 		Text = Settings.LogoText or "L",
 		TextColor3 = CurrentTheme.AccentLight,
-		TextSize = 18,
+		TextSize = Settings.LogoTextSize or 18,
 		Parent = TopBar,
 	})
 	Utility:Round(Logo, 10)
 	Theme:Register(Logo, "BackgroundColor3", "Surface")
 	Theme:Register(Logo, "TextColor3", "AccentLight")
+	self.Logo = Logo
 
 	local Title = Utility:Create("TextLabel", {
 		Name = "Title",
 		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 56, 0, 9),
-		Size = UDim2.new(1, -140, 0, 22),
-		Font = Enum.Font.GothamBold,
+		Position = UDim2.new(0, TitleX, 0, 9),
+		Size = UDim2.new(1, -TitleX - ControlReserve, 0, 22),
+		Font = Settings.TitleFont or Enum.Font.GothamBold,
 		Text = Settings.Name or Settings.Title or "Locito Hub",
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 18,
+		TextSize = Settings.TitleSize or 18,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = TopBar,
 	})
 	Theme:Register(Title, "TextColor3", "Text")
+	self.Title = Title
 
 	local Subtitle = Utility:Create("TextLabel", {
 		Name = "Subtitle",
 		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 56, 0, 30),
-		Size = UDim2.new(1, -140, 0, 16),
-		Font = Enum.Font.Gotham,
+		Position = UDim2.new(0, TitleX, 0, 30),
+		Size = UDim2.new(1, -TitleX - ControlReserve, 0, 16),
+		Visible = Settings.Subtitle ~= false,
+		Font = Settings.SubtitleFont or Enum.Font.Gotham,
 		Text = Settings.Subtitle or "Original Roblox UI Library",
 		TextColor3 = CurrentTheme.SubText,
-		TextSize = 11,
+		TextSize = Settings.SubtitleSize or 11,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = TopBar,
 	})
 	Theme:Register(Subtitle, "TextColor3", "SubText")
+	self.Subtitle = Subtitle
 
 	local Close = Utility:Create("TextButton", {
 		Name = "Close",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -14, 0, 14),
+		Position = UDim2.new(1, -OuterPadding, 0, math.floor((TopBarHeight - 28) / 2)),
 		Size = UDim2.new(0, 28, 0, 28),
+		Visible = ShowClose,
 		BackgroundColor3 = CurrentTheme.Surface,
 		Font = Enum.Font.GothamBold,
 		Text = "X",
@@ -1886,8 +2033,9 @@ function Window.new(Settings)
 	local Minimize = Utility:Create("TextButton", {
 		Name = "Minimize",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -48, 0, 14),
+		Position = UDim2.new(1, ShowClose and -(OuterPadding + 34) or -OuterPadding, 0, math.floor((TopBarHeight - 28) / 2)),
 		Size = UDim2.new(0, 28, 0, 28),
+		Visible = ShowMinimize,
 		BackgroundColor3 = CurrentTheme.Surface,
 		Font = Enum.Font.GothamBold,
 		Text = "-",
@@ -1902,8 +2050,9 @@ function Window.new(Settings)
 
 	local Sidebar = Utility:Create("Frame", {
 		Name = "Sidebar",
-		Position = UDim2.new(0, 14, 0, 66),
-		Size = UDim2.new(0, 160, 1, -80),
+		Position = UDim2.new(0, OuterPadding, 0, ContentTop),
+		Size = UDim2.new(0, SidebarWidth, 1, ContentHeightOffset),
+		Visible = HasSidebar,
 		BackgroundColor3 = CurrentTheme.Secondary,
 		BorderSizePixel = 0,
 		Parent = Main,
@@ -1930,8 +2079,8 @@ function Window.new(Settings)
 
 	local Content = Utility:Create("Frame", {
 		Name = "Content",
-		Position = UDim2.new(0, 188, 0, 66),
-		Size = UDim2.new(1, -202, 1, -80),
+		Position = UDim2.new(0, ContentX, 0, ContentTop),
+		Size = UDim2.new(1, ContentWidthOffset, 1, ContentHeightOffset),
 		BackgroundColor3 = CurrentTheme.Secondary,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
@@ -1953,20 +2102,26 @@ function Window.new(Settings)
 	NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
 	self.NotificationHolder = NotificationHolder
 
-	self.DragDisconnect = Utility:MakeDraggable(TopBar, Main)
+	if Settings.Draggable ~= false then
+		self.DragDisconnect = Utility:MakeDraggable(TopBar, Main)
+	end
 
-	Close.MouseButton1Click:Connect(function()
-		self:Destroy()
-	end)
+	if ShowClose then
+		Close.MouseButton1Click:Connect(function()
+			self:Destroy()
+		end)
+	end
 
 	local Minimized = false
 	local FullSize = Main.Size
-	Minimize.MouseButton1Click:Connect(function()
-		Minimized = not Minimized
-		Animation:Play(Main, {
-			Size = Minimized and UDim2.new(0, FullSize.X.Offset, 0, 56) or FullSize,
-		}, { Time = 0.22 })
-	end)
+	if ShowMinimize then
+		Minimize.MouseButton1Click:Connect(function()
+			Minimized = not Minimized
+			Animation:Play(Main, {
+				Size = Minimized and UDim2.new(0, FullSize.X.Offset, 0, TopBarHeight) or FullSize,
+			}, { Time = 0.22 })
+		end)
+	end
 
 	for _, Button in ipairs({ Close, Minimize }) do
 		Button.MouseEnter:Connect(function()
@@ -2026,6 +2181,30 @@ function Window:Toggle()
 	self.Frame.Visible = self.Visible
 end
 
+function Window:SetTitle(Text)
+	if self.Title then
+		self.Title.Text = Text
+	end
+end
+
+function Window:SetSubtitle(Text)
+	if self.Subtitle then
+		self.Subtitle.Text = Text
+	end
+end
+
+function Window:SetSize(Size)
+	self.Frame.Size = Size
+end
+
+function Window:SetPosition(Position)
+	self.Frame.Position = Position
+end
+
+function Window:SetTheme(Name)
+	return Theme:Set(Name)
+end
+
 function Window:Destroy()
 	if self.Destroyed then
 		return
@@ -2076,6 +2255,18 @@ end
 
 function LocitoUI:GetTheme()
 	return Theme:Get()
+end
+
+function LocitoUI:GetThemes()
+	return Theme:GetThemes()
+end
+
+function LocitoUI:AddTheme(Name, Values, BaseName)
+	return Theme:Add(Name, Values, BaseName)
+end
+
+function LocitoUI:SetAccent(Color, AccentLight)
+	return Theme:SetAccent(Color, AccentLight)
 end
 
 return LocitoUI

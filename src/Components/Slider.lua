@@ -24,6 +24,10 @@ function Slider.new(Section, Options)
 	self.Value = math.clamp(Options.Default or Options.Value or self.Min, self.Min, self.Max)
 	self.Changed = Options.Changed or Options.Callback or function() end
 	self.Decimals = Options.Decimals or 0
+	self.Step = Options.Step or Options.Increment or 0
+	self.Prefix = Options.Prefix or ""
+	self.Suffix = Options.Suffix or ""
+	self.Format = Options.Format
 	self.Range = self.Max - self.Min
 	self.Connections = {}
 
@@ -31,7 +35,7 @@ function Slider.new(Section, Options)
 
 	local Row = Utility:Create("Frame", {
 		Name = "Slider",
-		Size = UDim2.new(1, 0, 0, 56),
+		Size = Options.Size or UDim2.new(1, 0, 0, Options.Height or 56),
 		BackgroundColor3 = CurrentTheme.Secondary,
 		BorderSizePixel = 0,
 		Parent = Section.Body,
@@ -71,7 +75,7 @@ function Slider.new(Section, Options)
 	local Track = Utility:Create("Frame", {
 		Name = "Track",
 		Position = UDim2.new(0, 12, 0, 36),
-		Size = UDim2.new(1, -24, 0, 8),
+		Size = UDim2.new(1, -24, 0, Options.TrackHeight or 8),
 		BackgroundColor3 = CurrentTheme.Border,
 		BorderSizePixel = 0,
 		Parent = Row,
@@ -108,16 +112,29 @@ function Slider.new(Section, Options)
 	local Dragging = false
 
 	local function RoundValue(Value)
+		if self.Step > 0 then
+			Value = self.Min + math.floor(((Value - self.Min) / self.Step) + 0.5) * self.Step
+		end
+
 		local Multiplier = 10 ^ self.Decimals
 		return math.floor(Value * Multiplier + 0.5) / Multiplier
+	end
+
+	local function FormatValue(Value)
+		if typeof(self.Format) == "function" then
+			return tostring(self.Format(Value))
+		end
+
+		return self.Prefix .. tostring(Value) .. self.Suffix
 	end
 
 	function self:UpdateFromRatio(Ratio, SkipCallback)
 		Ratio = math.clamp(Ratio, 0, 1)
 		self.Value = RoundValue(self.Min + self.Range * Ratio)
-		ValueLabel.Text = tostring(self.Value)
-		Fill.Size = UDim2.new(Ratio, 0, 1, 0)
-		Knob.Position = UDim2.new(Ratio, 0, 0.5, 0)
+		local VisualRatio = self.Range == 0 and 0 or (self.Value - self.Min) / self.Range
+		ValueLabel.Text = FormatValue(self.Value)
+		Fill.Size = UDim2.new(VisualRatio, 0, 1, 0)
+		Knob.Position = UDim2.new(VisualRatio, 0, 0.5, 0)
 		if not SkipCallback then
 			Utility:SafeCall(self.Changed, self.Value)
 		end
@@ -163,6 +180,17 @@ end
 
 function Slider:Get()
 	return self.Value
+end
+
+function Slider:SetBounds(Min, Max)
+	if Max < Min then
+		Min, Max = Max, Min
+	end
+
+	self.Min = Min
+	self.Max = Max
+	self.Range = self.Max - self.Min
+	self:Set(self.Value)
 end
 
 function Slider:Destroy()

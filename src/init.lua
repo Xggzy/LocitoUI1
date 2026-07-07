@@ -27,4 +27,16 @@ function LocitoUI:GetTheme()
 	return Theme:Get()
 end
 
+function LocitoUI:GetThemes()
+	return Theme:GetThemes()
+end
+
+function LocitoUI:AddTheme(Name, Values, BaseName)
+	return Theme:Add(Name, Values, BaseName)
+end
+
+function LocitoUI:SetAccent(Color, AccentLight)
+	return Theme:SetAccent(Color, AccentLight)
+end
+
 return LocitoUI

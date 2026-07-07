@@ -15,6 +15,14 @@ local Tab = require(script.Parent.Components.Tab)
 function Window.new(Settings)
 	Settings = Settings or {}
 
+	if Settings.CustomTheme then
+		local ThemeName = Settings.Theme or Settings.ThemeName or "Custom"
+		Theme:Add(ThemeName, Settings.CustomTheme, Settings.BaseTheme)
+		Theme:Set(ThemeName)
+	elseif Settings.Theme then
+		Theme:Set(Settings.Theme)
+	end
+
 	local self = setmetatable({}, Window)
 	self.Settings = Settings
 	self.Tabs = {}
@@ -24,6 +32,22 @@ function Window.new(Settings)
 	local CurrentTheme = Theme:Get()
 	local Player = Players.LocalPlayer
 	local ParentGui = Settings.Parent or (Player and Player:WaitForChild("PlayerGui"))
+	local WindowSize = Settings.Size or UDim2.new(0, Settings.Width or 680, 0, Settings.Height or 450)
+	local TopBarHeight = Settings.TopBarHeight or Settings.TopbarHeight or 56
+	local OuterPadding = Settings.Padding or 14
+	local Gap = Settings.Gap or 14
+	local ContentGap = Settings.ContentGap or 10
+	local SidebarWidth = Settings.SidebarWidth or 160
+	local HasSidebar = Settings.Sidebar ~= false
+	local ContentX = HasSidebar and (OuterPadding + SidebarWidth + Gap) or OuterPadding
+	local ContentTop = TopBarHeight + ContentGap
+	local ContentWidthOffset = HasSidebar and -(OuterPadding * 2 + SidebarWidth + Gap) or -(OuterPadding * 2)
+	local ContentHeightOffset = -(ContentTop + OuterPadding)
+	local ShowControls = Settings.Controls ~= false
+	local ShowClose = ShowControls and Settings.CloseButton ~= false
+	local ShowMinimize = ShowControls and Settings.MinimizeButton ~= false
+	local ControlReserve = ShowControls and 90 or 16
+	local TitleX = Settings.Logo == false and OuterPadding or (OuterPadding + 42)
 
 	local Gui = Utility:Create("ScreenGui", {
 		Name = Settings.GuiName or "LocitoUI",
@@ -38,10 +62,11 @@ function Window.new(Settings)
 
 	local Main = Utility:Create("Frame", {
 		Name = "MainWindow",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(0, Settings.Width or 680, 0, Settings.Height or 450),
+		AnchorPoint = Settings.AnchorPoint or Vector2.new(0.5, 0.5),
+		Position = Settings.Position or UDim2.new(0.5, 0, 0.5, 0),
+		Size = WindowSize,
 		BackgroundColor3 = CurrentTheme.Background,
+		BackgroundTransparency = Settings.Transparency or Settings.BackgroundTransparency or 0,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 		Parent = Gui,
@@ -54,7 +79,7 @@ function Window.new(Settings)
 
 	local TopBar = Utility:Create("Frame", {
 		Name = "TopBar",
-		Size = UDim2.new(1, 0, 0, 56),
+		Size = UDim2.new(1, 0, 0, TopBarHeight),
 		BackgroundColor3 = CurrentTheme.Background,
 		BorderSizePixel = 0,
 		Parent = Main,
@@ -65,51 +90,57 @@ function Window.new(Settings)
 	local Logo = Utility:Create("TextLabel", {
 		Name = "Logo",
 		BackgroundColor3 = CurrentTheme.Surface,
-		Position = UDim2.new(0, 14, 0, 12),
+		Position = UDim2.new(0, OuterPadding, 0, math.floor((TopBarHeight - 32) / 2)),
 		Size = UDim2.new(0, 32, 0, 32),
-		Font = Enum.Font.GothamBold,
+		Visible = Settings.Logo ~= false,
+		Font = Settings.LogoFont or Enum.Font.GothamBold,
 		Text = Settings.LogoText or "L",
 		TextColor3 = CurrentTheme.AccentLight,
-		TextSize = 18,
+		TextSize = Settings.LogoTextSize or 18,
 		Parent = TopBar,
 	})
 	Utility:Round(Logo, 10)
 	Theme:Register(Logo, "BackgroundColor3", "Surface")
 	Theme:Register(Logo, "TextColor3", "AccentLight")
+	self.Logo = Logo
 
 	local Title = Utility:Create("TextLabel", {
 		Name = "Title",
 		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 56, 0, 9),
-		Size = UDim2.new(1, -140, 0, 22),
-		Font = Enum.Font.GothamBold,
+		Position = UDim2.new(0, TitleX, 0, 9),
+		Size = UDim2.new(1, -TitleX - ControlReserve, 0, 22),
+		Font = Settings.TitleFont or Enum.Font.GothamBold,
 		Text = Settings.Name or Settings.Title or "Locito Hub",
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 18,
+		TextSize = Settings.TitleSize or 18,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = TopBar,
 	})
 	Theme:Register(Title, "TextColor3", "Text")
+	self.Title = Title
 
 	local Subtitle = Utility:Create("TextLabel", {
 		Name = "Subtitle",
 		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 56, 0, 30),
-		Size = UDim2.new(1, -140, 0, 16),
-		Font = Enum.Font.Gotham,
+		Position = UDim2.new(0, TitleX, 0, 30),
+		Size = UDim2.new(1, -TitleX - ControlReserve, 0, 16),
+		Visible = Settings.Subtitle ~= false,
+		Font = Settings.SubtitleFont or Enum.Font.Gotham,
 		Text = Settings.Subtitle or "Original Roblox UI Library",
 		TextColor3 = CurrentTheme.SubText,
-		TextSize = 11,
+		TextSize = Settings.SubtitleSize or 11,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = TopBar,
 	})
 	Theme:Register(Subtitle, "TextColor3", "SubText")
+	self.Subtitle = Subtitle
 
 	local Close = Utility:Create("TextButton", {
 		Name = "Close",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -14, 0, 14),
+		Position = UDim2.new(1, -OuterPadding, 0, math.floor((TopBarHeight - 28) / 2)),
 		Size = UDim2.new(0, 28, 0, 28),
+		Visible = ShowClose,
 		BackgroundColor3 = CurrentTheme.Surface,
 		Font = Enum.Font.GothamBold,
 		Text = "X",
@@ -125,8 +156,9 @@ function Window.new(Settings)
 	local Minimize = Utility:Create("TextButton", {
 		Name = "Minimize",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -48, 0, 14),
+		Position = UDim2.new(1, ShowClose and -(OuterPadding + 34) or -OuterPadding, 0, math.floor((TopBarHeight - 28) / 2)),
 		Size = UDim2.new(0, 28, 0, 28),
+		Visible = ShowMinimize,
 		BackgroundColor3 = CurrentTheme.Surface,
 		Font = Enum.Font.GothamBold,
 		Text = "-",
@@ -141,8 +173,9 @@ function Window.new(Settings)
 
 	local Sidebar = Utility:Create("Frame", {
 		Name = "Sidebar",
-		Position = UDim2.new(0, 14, 0, 66),
-		Size = UDim2.new(0, 160, 1, -80),
+		Position = UDim2.new(0, OuterPadding, 0, ContentTop),
+		Size = UDim2.new(0, SidebarWidth, 1, ContentHeightOffset),
+		Visible = HasSidebar,
 		BackgroundColor3 = CurrentTheme.Secondary,
 		BorderSizePixel = 0,
 		Parent = Main,
@@ -169,8 +202,8 @@ function Window.new(Settings)
 
 	local Content = Utility:Create("Frame", {
 		Name = "Content",
-		Position = UDim2.new(0, 188, 0, 66),
-		Size = UDim2.new(1, -202, 1, -80),
+		Position = UDim2.new(0, ContentX, 0, ContentTop),
+		Size = UDim2.new(1, ContentWidthOffset, 1, ContentHeightOffset),
 		BackgroundColor3 = CurrentTheme.Secondary,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
@@ -192,20 +225,26 @@ function Window.new(Settings)
 	NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
 	self.NotificationHolder = NotificationHolder
 
-	self.DragDisconnect = Utility:MakeDraggable(TopBar, Main)
+	if Settings.Draggable ~= false then
+		self.DragDisconnect = Utility:MakeDraggable(TopBar, Main)
+	end
 
-	Close.MouseButton1Click:Connect(function()
-		self:Destroy()
-	end)
+	if ShowClose then
+		Close.MouseButton1Click:Connect(function()
+			self:Destroy()
+		end)
+	end
 
 	local Minimized = false
 	local FullSize = Main.Size
-	Minimize.MouseButton1Click:Connect(function()
-		Minimized = not Minimized
-		Animation:Play(Main, {
-			Size = Minimized and UDim2.new(0, FullSize.X.Offset, 0, 56) or FullSize,
-		}, { Time = 0.22 })
-	end)
+	if ShowMinimize then
+		Minimize.MouseButton1Click:Connect(function()
+			Minimized = not Minimized
+			Animation:Play(Main, {
+				Size = Minimized and UDim2.new(0, FullSize.X.Offset, 0, TopBarHeight) or FullSize,
+			}, { Time = 0.22 })
+		end)
+	end
 
 	for _, Button in ipairs({ Close, Minimize }) do
 		Button.MouseEnter:Connect(function()
@@ -263,6 +302,30 @@ end
 function Window:Toggle()
 	self.Visible = not self.Visible
 	self.Frame.Visible = self.Visible
+end
+
+function Window:SetTitle(Text)
+	if self.Title then
+		self.Title.Text = Text
+	end
+end
+
+function Window:SetSubtitle(Text)
+	if self.Subtitle then
+		self.Subtitle.Text = Text
+	end
+end
+
+function Window:SetSize(Size)
+	self.Frame.Size = Size
+end
+
+function Window:SetPosition(Position)
+	self.Frame.Position = Position
+end
+
+function Window:SetTheme(Name)
+	return Theme:Set(Name)
 end
 
 function Window:Destroy()

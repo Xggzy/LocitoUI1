@@ -10,6 +10,19 @@ local Success, ErrorMessage = xpcall(function()
 
 	local LocitoUI = Loader()
 
+	LocitoUI:AddTheme("Candy", {
+		Background = Color3.fromRGB(18, 12, 20),
+		Secondary = Color3.fromRGB(28, 19, 31),
+		Surface = Color3.fromRGB(39, 27, 44),
+		SurfaceLight = Color3.fromRGB(53, 35, 61),
+		Accent = Color3.fromRGB(255, 120, 210),
+		AccentLight = Color3.fromRGB(255, 174, 230),
+		Text = Color3.fromRGB(255, 246, 252),
+		SubText = Color3.fromRGB(214, 178, 204),
+		Muted = Color3.fromRGB(116, 82, 108),
+		Border = Color3.fromRGB(92, 58, 86),
+	}, "Nebula")
+
 	local Players = game:GetService("Players")
 	local Parent = typeof(gethui) == "function" and gethui() or game:GetService("CoreGui")
 	local TestGui = Instance.new("ScreenGui")
@@ -31,15 +44,23 @@ local Success, ErrorMessage = xpcall(function()
 		Name = "Locito Hub",
 		Subtitle = "Executor test",
 		LogoText = "L",
+		Theme = "Candy",
 		Parent = Parent,
 		Width = 560,
 		Height = 360,
+		SidebarWidth = 130,
+		Padding = 12,
+		Gap = 10,
 		DisplayOrder = 999999,
 		Animate = false,
 	})
 
 	local Home = Window:CreateTab("Home", "H")
-	local Main = Home:CreateSection("Main")
+	local Main = Home:CreateSection({
+		Name = "Main",
+		Padding = 10,
+		ItemSpacing = 6,
+	})
 
 	Main:Paragraph({
 		Title = "LocitoUI loaded",
@@ -48,6 +69,8 @@ local Success, ErrorMessage = xpcall(function()
 
 	Main:Button({
 		Text = "Show notification",
+		Style = "Accent",
+		Height = 34,
 		Callback = function()
 			Window:Notify("LocitoUI", "Notifications are working.", 4, "Success")
 		end,
@@ -66,6 +89,20 @@ local Success, ErrorMessage = xpcall(function()
 		Min = 0,
 		Max = 100,
 		Default = 50,
+		Step = 5,
+		Suffix = "%",
+	})
+
+	Main:ColorPicker({
+		Text = "Live accent",
+		ApplyToTheme = true,
+		CloseOnSelect = true,
+		Presets = {
+			Color3.fromRGB(255, 120, 210),
+			Color3.fromRGB(0, 157, 255),
+			Color3.fromRGB(39, 212, 121),
+			Color3.fromRGB(255, 186, 73),
+		},
 	})
 
 	local Settings = Window:CreateTab("Settings", "S")

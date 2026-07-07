@@ -116,8 +116,8 @@ function Tab:_SetSelected(IsSelected)
 	end
 end
 
-function Tab:CreateSection(Name)
-	local NewSection = Section.new(self, Name)
+function Tab:CreateSection(Name, Options)
+	local NewSection = Section.new(self, Name, Options)
 	table.insert(self.Sections, NewSection)
 	return NewSection
 end

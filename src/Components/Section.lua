@@ -18,7 +18,13 @@ local Dropdown = require(script.Parent.Dropdown)
 local Keybind = require(script.Parent.Keybind)
 local ColorPicker = require(script.Parent.ColorPicker)
 
-function Section.new(Tab, Name)
+function Section.new(Tab, Name, Options)
+	if typeof(Name) == "table" then
+		Options = Name
+		Name = Options.Name or Options.Title or "Section"
+	end
+	Options = Options or {}
+
 	local self = setmetatable({}, Section)
 	self.Tab = Tab
 	self.Name = Name
@@ -28,29 +34,31 @@ function Section.new(Tab, Name)
 
 	local Frame = Utility:Create("Frame", {
 		Name = Name .. "Section",
-		Size = UDim2.new(1, -6, 0, 0),
+		Size = Options.Size or UDim2.new(1, Options.WidthOffset or -6, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = CurrentTheme.Surface,
+		BackgroundTransparency = Options.Transparency or Options.BackgroundTransparency or 0,
 		BorderSizePixel = 0,
 		Parent = Tab.Page,
 	})
-	Utility:Round(Frame, 12)
+	Utility:Round(Frame, Options.Radius or CurrentTheme.CornerRadius or 12)
 	local Stroke = Utility:Stroke(Frame, CurrentTheme.Border, 1, 0.15)
-	Utility:Padding(Frame, 12)
+	Utility:Padding(Frame, Options.Padding or 12)
 	Theme:Register(Frame, "BackgroundColor3", "Surface")
 	Theme:Register(Stroke, "Color", "Border")
 
-	local Layout = Utility:List(Frame, 8)
+	local Layout = Utility:List(Frame, Options.Spacing or 8)
 
 	local Title = Utility:Create("TextLabel", {
 		Name = "Title",
 		LayoutOrder = 1,
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, 20),
-		Font = Enum.Font.GothamBold,
+		Size = UDim2.new(1, 0, 0, Options.TitleHeight or 20),
+		Visible = Options.ShowTitle ~= false,
+		Font = Options.TitleFont or Enum.Font.GothamBold,
 		Text = Name,
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextSize = Options.TitleSize or 14,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Frame,
 	})
@@ -58,13 +66,13 @@ function Section.new(Tab, Name)
 
 	local Body = Utility:Create("Frame", {
 		Name = "Body",
-		LayoutOrder = 2,
+		LayoutOrder = Options.ShowTitle == false and 1 or 2,
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
 		Parent = Frame,
 	})
-	local BodyLayout = Utility:List(Body, 8)
+	local BodyLayout = Utility:List(Body, Options.ItemSpacing or Options.Spacing or 8)
 
 	self.Frame = Frame
 	self.Body = Body

@@ -89,6 +89,38 @@ function Theme:GetTheme(Name)
 	return self.Themes[Name]
 end
 
+function Theme:GetThemes()
+	local Names = {}
+	for Name in pairs(self.Themes) do
+		table.insert(Names, Name)
+	end
+	table.sort(Names)
+	return Names
+end
+
+function Theme:_Copy(Source)
+	local Result = {}
+	for Key, Value in pairs(Source or {}) do
+		Result[Key] = Value
+	end
+	return Result
+end
+
+function Theme:Add(Name, Values, BaseName)
+	if typeof(Name) ~= "string" or Name == "" or typeof(Values) ~= "table" then
+		return false
+	end
+
+	local Base = self.Themes[BaseName] or self:Get()
+	local NewTheme = self:_Copy(Base)
+	for Key, Value in pairs(Values) do
+		NewTheme[Key] = Value
+	end
+
+	self.Themes[Name] = NewTheme
+	return true
+end
+
 function Theme:Set(Name)
 	if not self.Themes[Name] then
 		return false
@@ -99,6 +131,19 @@ function Theme:Set(Name)
 
 	for _, Listener in ipairs(self.Listeners) do
 		task.spawn(Listener, self:Get(), Name)
+	end
+
+	return true
+end
+
+function Theme:SetAccent(Color, AccentLight)
+	local Current = self:Get()
+	Current.Accent = Color
+	Current.AccentLight = AccentLight or Color
+	self:Apply()
+
+	for _, Listener in ipairs(self.Listeners) do
+		task.spawn(Listener, Current, self.Current)
 	end
 
 	return true

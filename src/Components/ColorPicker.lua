@@ -22,7 +22,11 @@ local Presets = {
 function ColorPicker.new(Section, Options)
 	Options = Options or {}
 	local self = setmetatable({}, ColorPicker)
-	self.Value = Options.Default or Presets[1]
+	self.Presets = Options.Presets or Options.Colors or Presets
+	if #self.Presets == 0 then
+		self.Presets = Presets
+	end
+	self.Value = Options.Default or self.Presets[1]
 	self.Changed = Options.Changed or Options.Callback or function() end
 	self.Open = false
 
@@ -85,9 +89,9 @@ function ColorPicker.new(Section, Options)
 	})
 	Utility:List(Palette, 6, Enum.FillDirection.Horizontal)
 
-	for _, Color in ipairs(Presets) do
+	for _, Color in ipairs(self.Presets) do
 		local Swatch = Utility:Create("TextButton", {
-			Size = UDim2.new(0, 28, 0, 28),
+			Size = UDim2.new(0, Options.SwatchSize or 28, 0, Options.SwatchSize or 28),
 			BackgroundColor3 = Color,
 			BorderSizePixel = 0,
 			Text = "",
@@ -100,6 +104,13 @@ function ColorPicker.new(Section, Options)
 
 		Swatch.MouseButton1Click:Connect(function()
 			self:Set(Color)
+			if Options.ApplyToTheme then
+				Theme:SetAccent(Color)
+			end
+			if Options.CloseOnSelect then
+				self.Open = false
+				Palette.Visible = false
+			end
 		end)
 	end
 
