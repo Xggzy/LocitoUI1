@@ -1,49 +1,30 @@
 -- LocitoUI Main Loader
--- Version 0.1.0
+-- Version 0.2.0
 
 local LocitoUI = {}
 
-
 local Window = require(script.Parent.Window)
 local Theme = require(script.Parent.Theme)
+local Config = require(script.Parent.Config)
 
-
---------------------------------------------------
--- Create UI
---------------------------------------------------
+LocitoUI.Version = "0.2.0"
+LocitoUI.Theme = Theme
+LocitoUI.Config = Config
 
 function LocitoUI.new(Settings)
-
-	local UI = Window.new(Settings)
-
-	return UI
-
+	return Window.new(Settings)
 end
 
-
---------------------------------------------------
--- Theme Access
---------------------------------------------------
+function LocitoUI:Create(Settings)
+	return Window.new(Settings)
+end
 
 function LocitoUI:SetTheme(Name)
-
 	return Theme:Set(Name)
-
 end
-
 
 function LocitoUI:GetTheme()
-
 	return Theme:Get()
-
 end
-
-
---------------------------------------------------
--- Version
---------------------------------------------------
-
-LocitoUI.Version = "0.1.0"
-
 
 return LocitoUI

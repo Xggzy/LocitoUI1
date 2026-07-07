@@ -1,53 +1,140 @@
 -- LocitoUI Section System
--- Version 0.1.0
+-- Version 0.2.0
 
 local Section = {}
 Section.__index = Section
 
 local Utility = require(script.Parent.Parent.Utility)
 local Theme = require(script.Parent.Parent.Theme)
+
 local Button = require(script.Parent.Button)
+local Toggle = require(script.Parent.Toggle)
+local Slider = require(script.Parent.Slider)
+local Label = require(script.Parent.Label)
+local Paragraph = require(script.Parent.Paragraph)
+local Divider = require(script.Parent.Divider)
+local Textbox = require(script.Parent.Textbox)
+local Dropdown = require(script.Parent.Dropdown)
+local Keybind = require(script.Parent.Keybind)
+local ColorPicker = require(script.Parent.ColorPicker)
+
 function Section.new(Tab, Name)
-
 	local self = setmetatable({}, Section)
-
 	self.Tab = Tab
 	self.Name = Name
+	self.Elements = {}
 
-	local Frame = Instance.new("Frame")
-	Frame.Name = Name .. "_Section"
-	Frame.Size = UDim2.new(1, -10, 0, 80)
-	Frame.BackgroundColor3 = Theme:Get().Secondary
-	Frame.Parent = Tab.Page
-	Frame.AutomaticSize = Enum.AutomaticSize.Y
+	local CurrentTheme = Theme:Get()
 
-	Utility:Round(Frame, 10)
-	Utility:Stroke(Frame, Theme:Get().Border, 1)
-	Utility:Padding(Frame, 10)
+	local Frame = Utility:Create("Frame", {
+		Name = Name .. "Section",
+		Size = UDim2.new(1, -6, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundColor3 = CurrentTheme.Surface,
+		BorderSizePixel = 0,
+		Parent = Tab.Page,
+	})
+	Utility:Round(Frame, 12)
+	local Stroke = Utility:Stroke(Frame, CurrentTheme.Border, 1, 0.15)
+	Utility:Padding(Frame, 12)
+	Theme:Register(Frame, "BackgroundColor3", "Surface")
+	Theme:Register(Stroke, "Color", "Border")
 
-	local Title = Instance.new("TextLabel")
-	Title.Name = "Title"
-	Title.Size = UDim2.new(1, 0, 0, 25)
-	Title.BackgroundTransparency = 1
-	Title.Text = Name
-	Title.TextColor3 = Theme:Get().Text
-	Title.TextSize = 15
-	Title.Font = Enum.Font.GothamBold
-	Title.TextXAlignment = Enum.TextXAlignment.Left
-	Title.Parent = Frame
+	local Layout = Utility:List(Frame, 8)
 
-	local Layout = Instance.new("UIListLayout")
-	Layout.Padding = UDim.new(0, 8)
-	Layout.SortOrder = Enum.SortOrder.LayoutOrder
-	Layout.Parent = Frame
+	local Title = Utility:Create("TextLabel", {
+		Name = "Title",
+		LayoutOrder = 1,
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, 0, 0, 20),
+		Font = Enum.Font.GothamBold,
+		Text = Name,
+		TextColor3 = CurrentTheme.Text,
+		TextSize = 14,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = Frame,
+	})
+	Theme:Register(Title, "TextColor3", "Text")
+
+	local Body = Utility:Create("Frame", {
+		Name = "Body",
+		LayoutOrder = 2,
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundTransparency = 1,
+		Parent = Frame,
+	})
+	local BodyLayout = Utility:List(Body, 8)
 
 	self.Frame = Frame
+	self.Body = Body
 	self.Layout = Layout
+	self.BodyLayout = BodyLayout
 
 	return self
+end
 
+function Section:_Track(Element)
+	table.insert(self.Elements, Element)
+	return Element
 end
+
 function Section:Button(Options)
-	return Button.new(self, Options)
+	return self:_Track(Button.new(self, Options))
 end
+
+function Section:Toggle(Options)
+	return self:_Track(Toggle.new(self, Options))
+end
+
+function Section:Slider(Options)
+	return self:_Track(Slider.new(self, Options))
+end
+
+function Section:Label(Text)
+	return self:_Track(Label.new(self, Text))
+end
+
+function Section:Paragraph(Options)
+	return self:_Track(Paragraph.new(self, Options))
+end
+
+function Section:Divider()
+	return self:_Track(Divider.new(self))
+end
+
+function Section:Textbox(Options)
+	return self:_Track(Textbox.new(self, Options))
+end
+
+function Section:Dropdown(Options)
+	return self:_Track(Dropdown.new(self, Options))
+end
+
+function Section:Keybind(Options)
+	return self:_Track(Keybind.new(self, Options))
+end
+
+function Section:ColorPicker(Options)
+	return self:_Track(ColorPicker.new(self, Options))
+end
+
+function Section:Destroy()
+	if self.Destroyed then
+		return
+	end
+	self.Destroyed = true
+
+	for _, Element in ipairs(self.Elements) do
+		if Element.Destroy then
+			Element:Destroy()
+		end
+	end
+	self.Elements = {}
+
+	if self.Frame then
+		self.Frame:Destroy()
+	end
+end
+
 return Section

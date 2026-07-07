@@ -1,48 +1,61 @@
 -- LocitoUI Button Component
--- Version 0.1.0
+-- Version 0.2.0
 
 local Button = {}
+Button.__index = Button
 
 local Utility = require(script.Parent.Parent.Utility)
 local Theme = require(script.Parent.Parent.Theme)
 local Animation = require(script.Parent.Parent.Animation)
 
 function Button.new(Section, Options)
-
 	Options = Options or {}
+	local self = setmetatable({}, Button)
 
-	local Btn = Instance.new("TextButton")
-	Btn.Name = "Button"
-	Btn.Size = UDim2.new(1, 0, 0, 36)
-	Btn.BackgroundColor3 = Theme:Get().Surface
-	Btn.Text = Options.Text or "Button"
-	Btn.TextColor3 = Theme:Get().Text
-	Btn.TextSize = 14
-	Btn.Font = Enum.Font.GothamMedium
-	Btn.AutoButtonColor = false
-	Btn.Parent = Section.Frame
+	local CurrentTheme = Theme:Get()
+	self.Callback = Options.Callback or function() end
 
-	Utility:Round(Btn, 8)
-	Utility:Stroke(Btn, Theme:Get().Border, 1)
+	local Object = Utility:Create("TextButton", {
+		Name = "Button",
+		Size = UDim2.new(1, 0, 0, 38),
+		BackgroundColor3 = CurrentTheme.Secondary,
+		BorderSizePixel = 0,
+		Font = Enum.Font.GothamMedium,
+		Text = Options.Text or Options.Name or "Button",
+		TextColor3 = CurrentTheme.Text,
+		TextSize = 14,
+		AutoButtonColor = false,
+		Parent = Section.Body,
+	})
+	Utility:Round(Object, 9)
+	local Stroke = Utility:Stroke(Object, CurrentTheme.Border, 1, 0.25)
+	Theme:Register(Object, "BackgroundColor3", "Secondary")
+	Theme:Register(Object, "TextColor3", "Text")
+	Theme:Register(Stroke, "Color", "Border")
 
-	Btn.MouseEnter:Connect(function()
-		Animation:Play(Btn, {
-			BackgroundColor3 = Theme:Get().Accent
-		}, { Time = 0.15 })
+	Object.MouseEnter:Connect(function()
+		Animation:Play(Object, { BackgroundColor3 = Theme:Get().SurfaceLight }, { Time = 0.12 })
 	end)
 
-	Btn.MouseLeave:Connect(function()
-		Animation:Play(Btn, {
-			BackgroundColor3 = Theme:Get().Surface
-		}, { Time = 0.15 })
+	Object.MouseLeave:Connect(function()
+		Animation:Play(Object, { BackgroundColor3 = Theme:Get().Secondary }, { Time = 0.12 })
 	end)
 
-	Btn.MouseButton1Click:Connect(function()
-		Utility:Callback(Options.Callback)
+	Object.MouseButton1Click:Connect(function()
+		Animation:Pop(Object)
+		Utility:SafeCall(self.Callback)
 	end)
 
-	return Btn
+	self.Object = Object
+	return self
+end
 
+function Button:SetText(Text)
+	self.Object.Text = Text
+end
+
+function Button:Destroy()
+	self.Object:Destroy()
 end
 
 return Button

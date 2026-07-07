@@ -1,273 +1,287 @@
 -- LocitoUI Window System
--- Version 0.1.0
+-- Version 0.2.0
 
 local Window = {}
 Window.__index = Window
-
 
 local Players = game:GetService("Players")
 
 local Utility = require(script.Parent.Utility)
 local Theme = require(script.Parent.Theme)
 local Animation = require(script.Parent.Animation)
+local Notification = require(script.Parent.Notification)
 local Tab = require(script.Parent.Components.Tab)
 
---------------------------------------------------
--- Create Window
---------------------------------------------------
-
 function Window.new(Settings)
+	Settings = Settings or {}
 
 	local self = setmetatable({}, Window)
-
-
-	self.Settings = Settings or {}
-
+	self.Settings = Settings
 	self.Tabs = {}
+	self.ActiveTab = nil
+	self.Visible = true
 
-
-	--------------------------------------------------
-	-- Screen GUI
-	--------------------------------------------------
-
+	local CurrentTheme = Theme:Get()
 	local Player = Players.LocalPlayer
+	local ParentGui = Settings.Parent or (Player and Player:WaitForChild("PlayerGui"))
 
-	local Gui = Instance.new("ScreenGui")
-
-	Gui.Name = "LocitoUI"
-
-	Gui.ResetOnSpawn = false
-
-	Gui.Parent = Player.PlayerGui
-
-
+	local Gui = Utility:Create("ScreenGui", {
+		Name = Settings.GuiName or "LocitoUI",
+		ResetOnSpawn = false,
+		IgnoreGuiInset = true,
+		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+		Parent = ParentGui,
+	})
 	self.Gui = Gui
 
+	local Main = Utility:Create("Frame", {
+		Name = "MainWindow",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(0, Settings.Width or 680, 0, Settings.Height or 450),
+		BackgroundColor3 = CurrentTheme.Background,
+		BorderSizePixel = 0,
+		ClipsDescendants = true,
+		Parent = Gui,
+	})
+	Utility:Round(Main, CurrentTheme.CornerRadius)
+	local MainStroke = Utility:Stroke(Main, CurrentTheme.Border, 1)
+	Theme:Register(Main, "BackgroundColor3", "Background")
+	Theme:Register(MainStroke, "Color", "Border")
+	self.Frame = Main
 
-	--------------------------------------------------
-	-- Main Window
-	--------------------------------------------------
+	local TopBar = Utility:Create("Frame", {
+		Name = "TopBar",
+		Size = UDim2.new(1, 0, 0, 56),
+		BackgroundColor3 = CurrentTheme.Background,
+		BorderSizePixel = 0,
+		Parent = Main,
+	})
+	Theme:Register(TopBar, "BackgroundColor3", "Background")
+	self.TopBar = TopBar
 
-	local Frame = Instance.new("Frame")
+	local Logo = Utility:Create("TextLabel", {
+		Name = "Logo",
+		BackgroundColor3 = CurrentTheme.Surface,
+		Position = UDim2.new(0, 14, 0, 12),
+		Size = UDim2.new(0, 32, 0, 32),
+		Font = Enum.Font.GothamBold,
+		Text = Settings.LogoText or "L",
+		TextColor3 = CurrentTheme.AccentLight,
+		TextSize = 18,
+		Parent = TopBar,
+	})
+	Utility:Round(Logo, 10)
+	Theme:Register(Logo, "BackgroundColor3", "Surface")
+	Theme:Register(Logo, "TextColor3", "AccentLight")
 
-	Frame.Name = "MainWindow"
+	local Title = Utility:Create("TextLabel", {
+		Name = "Title",
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, 56, 0, 9),
+		Size = UDim2.new(1, -140, 0, 22),
+		Font = Enum.Font.GothamBold,
+		Text = Settings.Name or Settings.Title or "Locito Hub",
+		TextColor3 = CurrentTheme.Text,
+		TextSize = 18,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = TopBar,
+	})
+	Theme:Register(Title, "TextColor3", "Text")
 
-	Frame.Size = UDim2.new(
-		0,
-		650,
-		0,
-		420
-	)
+	local Subtitle = Utility:Create("TextLabel", {
+		Name = "Subtitle",
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, 56, 0, 30),
+		Size = UDim2.new(1, -140, 0, 16),
+		Font = Enum.Font.Gotham,
+		Text = Settings.Subtitle or "Original Roblox UI Library",
+		TextColor3 = CurrentTheme.SubText,
+		TextSize = 11,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = TopBar,
+	})
+	Theme:Register(Subtitle, "TextColor3", "SubText")
 
-	Frame.Position = UDim2.new(
-		0.5,
-		-325,
-		0.5,
-		-210
-	)
+	local Close = Utility:Create("TextButton", {
+		Name = "Close",
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -14, 0, 14),
+		Size = UDim2.new(0, 28, 0, 28),
+		BackgroundColor3 = CurrentTheme.Surface,
+		Font = Enum.Font.GothamBold,
+		Text = "×",
+		TextColor3 = CurrentTheme.SubText,
+		TextSize = 16,
+		AutoButtonColor = false,
+		Parent = TopBar,
+	})
+	Utility:Round(Close, 8)
+	Theme:Register(Close, "BackgroundColor3", "Surface")
+	Theme:Register(Close, "TextColor3", "SubText")
 
-	Frame.BackgroundColor3 =
-		Theme:Get().Background
+	local Minimize = Utility:Create("TextButton", {
+		Name = "Minimize",
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -48, 0, 14),
+		Size = UDim2.new(0, 28, 0, 28),
+		BackgroundColor3 = CurrentTheme.Surface,
+		Font = Enum.Font.GothamBold,
+		Text = "–",
+		TextColor3 = CurrentTheme.SubText,
+		TextSize = 16,
+		AutoButtonColor = false,
+		Parent = TopBar,
+	})
+	Utility:Round(Minimize, 8)
+	Theme:Register(Minimize, "BackgroundColor3", "Surface")
+	Theme:Register(Minimize, "TextColor3", "SubText")
 
-
-	Frame.Parent = Gui
-
-
-	Utility:Round(
-		Frame,
-		Theme:Get().CornerRadius
-	)
-
-
-	Utility:Stroke(
-		Frame,
-		Theme:Get().Border
-	)
-
-
-	self.Frame = Frame
-
-
-	--------------------------------------------------
-	-- Title Bar
-	--------------------------------------------------
-
-	local Title = Instance.new("TextLabel")
-
-	Title.Size = UDim2.new(
-		1,
-		0,
-		0,
-		50
-	)
-
-	Title.BackgroundTransparency = 1
-
-	Title.Text =
-		self.Settings.Name or "LocitoUI"
-
-	Title.TextColor3 =
-		Theme:Get().Text
-
-	Title.TextSize = 22
-
-	Title.Font =
-		Enum.Font.GothamBold
-
-
-	Title.Parent = Frame
-
-
-	--------------------------------------------------
-	-- Sidebar
-	--------------------------------------------------
-
-	local Sidebar = Instance.new("Frame")
-
-	Sidebar.Name = "Sidebar"
-
-	Sidebar.Position =
-		UDim2.new(
-			0,
-			10,
-			0,
-			60
-		)
-
-	Sidebar.Size =
-		UDim2.new(
-			0,
-			150,
-			1,
-			-70
-		)
-
-	Sidebar.BackgroundColor3 =
-		Theme:Get().Secondary
-
-
-	Sidebar.Parent = Frame
-
-
-	Utility:Round(
-		Sidebar,
-		10
-	)
-
-
+	local Sidebar = Utility:Create("Frame", {
+		Name = "Sidebar",
+		Position = UDim2.new(0, 14, 0, 66),
+		Size = UDim2.new(0, 160, 1, -80),
+		BackgroundColor3 = CurrentTheme.Secondary,
+		BorderSizePixel = 0,
+		Parent = Main,
+	})
+	Utility:Round(Sidebar, 12)
+	Theme:Register(Sidebar, "BackgroundColor3", "Secondary")
 	self.Sidebar = Sidebar
 
+	local SidebarList = Utility:Create("ScrollingFrame", {
+		Name = "TabList",
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Position = UDim2.new(0, 8, 0, 8),
+		Size = UDim2.new(1, -16, 1, -16),
+		ScrollBarThickness = 2,
+		ScrollBarImageColor3 = CurrentTheme.Accent,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
+		Parent = Sidebar,
+	})
+	Theme:Register(SidebarList, "ScrollBarImageColor3", "Accent")
+	local SidebarLayout = Utility:List(SidebarList, 6)
+	Utility:AutoCanvas(SidebarList, SidebarLayout, 12)
+	self.SidebarList = SidebarList
 
-	--------------------------------------------------
-	-- Content
-	--------------------------------------------------
-
-	local Content = Instance.new("Frame")
-
-	Content.Name = "Content"
-
-	Content.Position =
-		UDim2.new(
-			0,
-			170,
-			0,
-			60
-		)
-
-	Content.Size =
-		UDim2.new(
-			1,
-			-180,
-			1,
-			-70
-		)
-
-
-	Content.BackgroundTransparency = 1
-
-	Content.Parent = Frame
-
-
+	local Content = Utility:Create("Frame", {
+		Name = "Content",
+		Position = UDim2.new(0, 188, 0, 66),
+		Size = UDim2.new(1, -202, 1, -80),
+		BackgroundColor3 = CurrentTheme.Secondary,
+		BorderSizePixel = 0,
+		ClipsDescendants = true,
+		Parent = Main,
+	})
+	Utility:Round(Content, 12)
+	Theme:Register(Content, "BackgroundColor3", "Secondary")
 	self.Content = Content
 
+	local NotificationHolder = Utility:Create("Frame", {
+		Name = "NotificationHolder",
+		AnchorPoint = Vector2.new(1, 1),
+		Position = UDim2.new(1, -16, 1, -16),
+		Size = UDim2.new(0, 290, 1, -32),
+		BackgroundTransparency = 1,
+		Parent = Gui,
+	})
+	local NotificationLayout = Utility:List(NotificationHolder, 8)
+	NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+	self.NotificationHolder = NotificationHolder
 
-	--------------------------------------------------
-	-- Dragging
-	--------------------------------------------------
+	self.DragDisconnect = Utility:MakeDraggable(TopBar, Main)
 
-	local Dragging = false
-	local Start
-	local StartPos
-
-
-	Title.InputBegan:Connect(function(Input)
-
-		if Input.UserInputType ==
-			Enum.UserInputType.MouseButton1 then
-
-			Dragging = true
-
-			Start = Input.Position
-
-			StartPos = Frame.Position
-
-		end
-
+	Close.MouseButton1Click:Connect(function()
+		self:Destroy()
 	end)
 
-
-	Title.InputEnded:Connect(function(Input)
-
-		if Input.UserInputType ==
-			Enum.UserInputType.MouseButton1 then
-
-			Dragging = false
-
-		end
-
+	local Minimized = false
+	local FullSize = Main.Size
+	Minimize.MouseButton1Click:Connect(function()
+		Minimized = not Minimized
+		Animation:Play(Main, {
+			Size = Minimized and UDim2.new(0, FullSize.X.Offset, 0, 56) or FullSize,
+		}, { Time = 0.22 })
 	end)
 
+	for _, Button in ipairs({ Close, Minimize }) do
+		Button.MouseEnter:Connect(function()
+			Animation:Play(Button, { TextColor3 = Theme:Get().Text }, { Time = 0.12 })
+		end)
+		Button.MouseLeave:Connect(function()
+			Animation:Play(Button, { TextColor3 = Theme:Get().SubText }, { Time = 0.12 })
+		end)
+	end
 
-	game:GetService("UserInputService")
-	.InputChanged:Connect(function(Input)
-
-		if Dragging and
-			Input.UserInputType ==
-			Enum.UserInputType.MouseMovement then
-
-
-			local Delta =
-				Input.Position - Start
-
-
-			Frame.Position =
-				StartPos +
-				UDim2.new(
-					0,
-					Delta.X,
-					0,
-					Delta.Y
-				)
-
-		end
-
-	end)
-
-
-	Animation:FadeIn(Frame)
-function Window:CreateTab(Name, Icon)
-
-    return Tab.new(
-        self,
-        Name,
-        Icon
-    )
-
-end
+	Main.Size = UDim2.new(0, 0, 0, 0)
+	Animation:Play(Main, { Size = FullSize }, { Time = 0.32 })
 
 	return self
-
 end
 
+function Window:_SelectTab(TabObject)
+	if self.ActiveTab == TabObject then return end
+
+	if self.ActiveTab then
+		self.ActiveTab:_SetSelected(false)
+	end
+
+	self.ActiveTab = TabObject
+	TabObject:_SetSelected(true)
+end
+
+function Window:CreateTab(Name, Icon)
+	local NewTab = Tab.new(self, Name, Icon)
+	table.insert(self.Tabs, NewTab)
+
+	if #self.Tabs == 1 then
+		self:_SelectTab(NewTab)
+	end
+
+	return NewTab
+end
+
+Window.Tab = Window.CreateTab
+Window.Page = Window.CreateTab
+
+function Window:Notify(Title, Message, Duration, Kind)
+	return Notification.new(self, {
+		Title = Title,
+		Message = Message,
+		Duration = Duration,
+		Kind = Kind,
+	})
+end
+
+function Window:Toggle()
+	self.Visible = not self.Visible
+	self.Frame.Visible = self.Visible
+end
+
+function Window:Destroy()
+	if self.Destroyed then
+		return
+	end
+	self.Destroyed = true
+
+	if self.DragDisconnect then
+		self.DragDisconnect()
+		self.DragDisconnect = nil
+	end
+
+	for _, TabObject in ipairs(self.Tabs) do
+		if TabObject.Destroy then
+			TabObject:Destroy()
+		end
+	end
+	self.Tabs = {}
+	self.ActiveTab = nil
+
+	if self.Gui then
+		self.Gui:Destroy()
+		self.Gui = nil
+	end
+end
 
 return Window
