@@ -83,6 +83,22 @@ Movement:Button({
 })
 ```
 
+## Loadstring Usage
+
+If you are running LocitoUI as one direct script instead of as a ModuleScript folder, use the standalone bundle:
+
+```lua
+local LocitoUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Xggzy/LocitoUI1/main/dist/LocitoUI.lua"))()
+```
+
+To run the included demo window directly:
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Xggzy/LocitoUI1/main/Examples/Executor.lua"))()
+```
+
+See `Examples/Executor.lua` for a full window example.
+
 ## GitHub Usage
 
 After this repository is pushed, you can download it from GitHub and place the `LocitoUI` folder into `ReplicatedStorage`.

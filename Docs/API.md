@@ -10,6 +10,20 @@ local Window = LocitoUI.new({
 })
 ```
 
+## Loadstring
+
+Use the standalone bundle when you do not have the full ModuleScript folder available:
+
+```lua
+local LocitoUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Xggzy/LocitoUI1/main/dist/LocitoUI.lua"))()
+```
+
+To show the included demo window directly:
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Xggzy/LocitoUI1/main/Examples/Executor.lua"))()
+```
+
 ## Tabs
 
 ```lua
