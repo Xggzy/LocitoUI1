@@ -254,7 +254,7 @@ Theme.Themes = {
 		Text = Color3.fromRGB(255, 255, 255),
 		SubText = Color3.fromRGB(184, 184, 190),
 		Muted = Color3.fromRGB(102, 102, 110),
-		Border = Color3.fromRGB(236, 236, 242),
+		Border = Color3.fromRGB(74, 74, 82),
 		TabActive = Color3.fromRGB(32, 32, 36),
 		TabHover = Color3.fromRGB(22, 22, 26),
 		Track = Color3.fromRGB(48, 48, 54),
@@ -2446,6 +2446,11 @@ function Window.new(Settings)
 			PrimaryColor = Settings.BackgroundLogoPrimaryColor,
 			SecondaryColor = Settings.BackgroundLogoSecondaryColor,
 			StoneColor = Settings.BackgroundLogoStoneColor,
+			OuterSword = Settings.OuterSword == true or Settings.OrbitSword == true or Settings.ExternalSword == true,
+			OuterSwordSpeed = Settings.OuterSwordSpeed or Settings.OrbitSwordSpeed or 46,
+			OuterSwordRadiusX = Settings.OuterSwordRadiusX or Settings.OrbitSwordRadiusX,
+			OuterSwordRadiusY = Settings.OuterSwordRadiusY or Settings.OrbitSwordRadiusY,
+			BackgroundVisible = true,
 		}
 		local BackgroundLogo = Utility:Create("Frame", {
 			Name = "AnimatedBackgroundLogo",
@@ -2457,6 +2462,126 @@ function Window.new(Settings)
 			ZIndex = 0,
 			Parent = Main,
 		})
+
+		local OuterSwordLayer
+		local OuterSwordGroup
+		local OuterBlade
+		local OuterTip
+		local OuterGuard
+		local OuterGrip
+		local OuterPommel
+		local OuterName
+
+		if BackgroundLogoState.OuterSword then
+			OuterSwordLayer = Utility:Create("Frame", {
+				Name = "OuterSwordOrbitLayer",
+				AnchorPoint = MainAnchor,
+				Position = MainPosition,
+				Size = WindowSize,
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				ClipsDescendants = false,
+				ZIndex = Settings.OuterSwordZIndex or 2,
+				Parent = Gui,
+			})
+
+			OuterSwordGroup = Utility:Create("Frame", {
+				Name = "OuterOrbitSword",
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.new(0.5, 0, 0.5, 0),
+				Size = Settings.OuterSwordSize or UDim2.new(0, 72, 0, 146),
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				ZIndex = Settings.OuterSwordZIndex or 2,
+				Parent = OuterSwordLayer,
+			})
+
+			OuterBlade = Utility:Create("Frame", {
+				Name = "OuterBlade",
+				AnchorPoint = Vector2.new(0.5, 0),
+				Position = UDim2.new(0.5, 0, 0.04, 0),
+				Size = UDim2.new(0, 9, 0.58, 0),
+				BackgroundColor3 = CurrentTheme.AccentLight,
+				BackgroundTransparency = 0.2,
+				BorderSizePixel = 0,
+				ZIndex = Settings.OuterSwordZIndex or 2,
+				Parent = OuterSwordGroup,
+			})
+			Utility:Round(OuterBlade, 5)
+
+			OuterTip = Utility:Create("Frame", {
+				Name = "OuterTip",
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.new(0.5, 0, 0.04, 0),
+				Size = UDim2.new(0, 21, 0, 21),
+				BackgroundColor3 = CurrentTheme.AccentLight,
+				BackgroundTransparency = 0.2,
+				BorderSizePixel = 0,
+				Rotation = 45,
+				ZIndex = Settings.OuterSwordZIndex or 2,
+				Parent = OuterSwordGroup,
+			})
+			Utility:Round(OuterTip, 4)
+
+			OuterGuard = Utility:Create("Frame", {
+				Name = "OuterGuard",
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.new(0.5, 0, 0.62, 0),
+				Size = UDim2.new(0.66, 0, 0, 8),
+				BackgroundColor3 = CurrentTheme.Accent,
+				BackgroundTransparency = 0.28,
+				BorderSizePixel = 0,
+				ZIndex = Settings.OuterSwordZIndex or 2,
+				Parent = OuterSwordGroup,
+			})
+			Utility:Round(OuterGuard, 8)
+
+			OuterGrip = Utility:Create("Frame", {
+				Name = "OuterGrip",
+				AnchorPoint = Vector2.new(0.5, 0),
+				Position = UDim2.new(0.5, 0, 0.62, 0),
+				Size = UDim2.new(0, 14, 0.22, 0),
+				BackgroundColor3 = CurrentTheme.SurfaceLight,
+				BackgroundTransparency = 0.18,
+				BorderSizePixel = 0,
+				ZIndex = Settings.OuterSwordZIndex or 2,
+				Parent = OuterSwordGroup,
+			})
+			Utility:Round(OuterGrip, 6)
+
+			OuterPommel = Utility:Create("Frame", {
+				Name = "OuterPommel",
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.new(0.5, 0, 0.84, 0),
+				Size = UDim2.new(0, 23, 0, 10),
+				BackgroundColor3 = CurrentTheme.Accent,
+				BackgroundTransparency = 0.28,
+				BorderSizePixel = 0,
+				ZIndex = Settings.OuterSwordZIndex or 2,
+				Parent = OuterSwordGroup,
+			})
+			Utility:Round(OuterPommel, 8)
+
+			if Settings.OuterSwordName ~= false then
+				OuterName = Utility:Create("TextLabel", {
+					Name = "OuterName",
+					AnchorPoint = Vector2.new(0.5, 1),
+					Position = UDim2.new(0.5, 0, 1, 0),
+					Size = UDim2.new(1, 0, 0, 14),
+					BackgroundTransparency = 1,
+					Font = Enum.Font.GothamBlack,
+					Text = Settings.BackgroundLogoName or Settings.Name or "Locito",
+					TextColor3 = CurrentTheme.Accent,
+					TextTransparency = 0.34,
+					TextScaled = true,
+					ZIndex = Settings.OuterSwordZIndex or 2,
+					Parent = OuterSwordGroup,
+				})
+			end
+
+			self.OuterSwordLayer = OuterSwordLayer
+			self.OuterSword = OuterSwordGroup
+		end
 
 		local GlowDisc = Utility:Create("Frame", {
 			Name = "GlowDisc",
@@ -2873,10 +2998,11 @@ function Window.new(Settings)
 			local RingTransparency = math.clamp(Transparency - 0.14, 0.12, 0.92)
 			local SoftTransparency = math.clamp(Transparency + 0.16, 0.22, 0.96)
 			local HeavyTransparency = math.clamp(Transparency - 0.18, 0.08, 0.86)
-			local GlowTransparency = math.clamp(Material.GlowTransparency - Intensity * 0.05, 0.72, 0.97)
+			local GlowTransparency = math.clamp(Settings.BackgroundLogoGlowTransparency or (Material.GlowTransparency - Intensity * 0.05), 0.72, 1)
 			local StrokeTransparency = math.clamp(Material.StrokeTransparency - Intensity * 0.08, 0.08, 0.88)
 
-			local ShowsSword = Shape == "sword" or Shape == "blade" or Shape == "shatter"
+			local UsesOuterSword = OuterSwordGroup ~= nil and BackgroundLogoState.OuterSword ~= false
+			local ShowsSword = not UsesOuterSword and (Shape == "sword" or Shape == "blade" or Shape == "shatter")
 			local ShowsDiamond = Shape == "sword" or Shape == "diamond" or Shape == "cross" or Shape == "shatter"
 			local ShowsHex = Shape == "hex" or Shape == "shatter"
 			local ShowsCross = Shape == "cross" or Shape == "orbit"
@@ -2927,6 +3053,19 @@ function Window.new(Settings)
 			Inscription.TextColor3 = Material.Primary
 			Inscription.TextTransparency = math.clamp(Transparency + 0.02, 0.28, 0.9)
 
+			if OuterSwordGroup then
+				OuterSwordGroup.Visible = BackgroundLogoState.OuterSword ~= false
+				ApplyFrame(OuterBlade, Material.Primary, math.clamp(Transparency - 0.24, 0.04, 0.78))
+				ApplyFrame(OuterTip, Material.Primary, math.clamp(Transparency - 0.24, 0.04, 0.78))
+				ApplyFrame(OuterGuard, Material.Secondary, math.clamp(Transparency - 0.1, 0.06, 0.82))
+				ApplyFrame(OuterGrip, Material.Stone, math.clamp(Transparency - 0.18, 0.04, 0.82))
+				ApplyFrame(OuterPommel, Material.Secondary, math.clamp(Transparency - 0.1, 0.06, 0.82))
+				if OuterName then
+					OuterName.TextColor3 = Material.Primary
+					OuterName.TextTransparency = math.clamp(Transparency + 0.06, 0.22, 0.82)
+				end
+			end
+
 			BackgroundLogoState._LastMaterial = Material
 		end
 
@@ -2970,7 +3109,7 @@ function Window.new(Settings)
 				Spark.BackgroundTransparency = math.clamp(Transparency + 0.12 + SparkPulse * 0.22, 0.18, 0.9)
 				Spark.Size = UDim2.new(0, SparkSize, 0, SparkSize)
 			end
-			GlowDisc.BackgroundTransparency = math.clamp((Material.GlowTransparency or 0.88) + Pulse * 0.05, 0.72, 0.97)
+			GlowDisc.BackgroundTransparency = math.clamp((Settings.BackgroundLogoGlowTransparency or Material.GlowTransparency or 0.88) + Pulse * 0.05, 0.72, 1)
 			GlowDisc.Size = UDim2.new(0.82 + Pulse * 0.04 * Intensity, 0, 0.82 + Pulse * 0.04 * Intensity, 0)
 			LogoWatermark.Rotation = -Rotation
 			LogoWatermark.TextTransparency = math.clamp(Transparency + 0.18 + Pulse * 0.04, 0.42, 0.9)
@@ -2978,6 +3117,22 @@ function Window.new(Settings)
 				Spoke.Rotation = 24 + math.sin(os.clock() * 2.8) * 8
 			else
 				Spoke.Rotation = 0
+			end
+
+			if OuterSwordGroup then
+				OuterSwordGroup.Visible = self.Visible and BackgroundLogoState.BackgroundVisible ~= false and BackgroundLogoState.OuterSword ~= false
+				local OrbitSpeed = ClampNumber(BackgroundLogoState.OuterSwordSpeed, 0, 180, 46)
+				local RadiusX = ClampNumber(BackgroundLogoState.OuterSwordRadiusX, 160, 620, (WindowSize.X.Offset / 2) + 78)
+				local RadiusY = ClampNumber(BackgroundLogoState.OuterSwordRadiusY, 120, 460, (WindowSize.Y.Offset / 2) + 64)
+				local Angle = math.rad(os.clock() * OrbitSpeed)
+				local OffsetX = math.cos(Angle) * RadiusX
+				local OffsetY = math.sin(Angle) * RadiusY
+				local Tilt = math.sin(os.clock() * (2.2 + Intensity)) * (5 + Intensity * 3)
+
+				OuterSwordGroup.Position = UDim2.new(0.5, OffsetX, 0.5, OffsetY)
+				OuterSwordGroup.Rotation = math.deg(Angle) + 90 + Tilt
+				OuterBlade.BackgroundTransparency = math.clamp(Transparency - 0.24 + Pulse * 0.05, 0.04, 0.78)
+				OuterTip.BackgroundTransparency = OuterBlade.BackgroundTransparency
 			end
 		end))
 	end
@@ -3205,6 +3360,9 @@ function Window.new(Settings)
 			if Shadow then
 				Shadow.Position = Position
 			end
+			if self.OuterSwordLayer then
+				self.OuterSwordLayer.Position = Position
+			end
 		end)
 	end
 
@@ -3315,6 +3473,9 @@ function Window:SetVisible(Visible, Animated)
 	if Visible then
 		self.Frame.Visible = true
 		self.Frame.Size = ShouldAnimate and self.HiddenSize or self.FullSize
+		if self.OuterSwordLayer then
+			self.OuterSwordLayer.Visible = not self.BackgroundLogoState or self.BackgroundLogoState.BackgroundVisible ~= false
+		end
 		if self.Shadow then
 			self.Shadow.Visible = true
 			self.Shadow.Size = ShouldAnimate and self.ShadowHiddenSize or self.ShadowFullSize
@@ -3340,11 +3501,17 @@ function Window:SetVisible(Visible, Animated)
 				if not self.Visible and self.Shadow then
 					self.Shadow.Visible = false
 				end
+				if not self.Visible and self.OuterSwordLayer then
+					self.OuterSwordLayer.Visible = false
+				end
 			end)
 		else
 			self.Frame.Visible = false
 			if self.Shadow then
 				self.Shadow.Visible = false
+			end
+			if self.OuterSwordLayer then
+				self.OuterSwordLayer.Visible = false
 			end
 		end
 	end
@@ -3385,12 +3552,18 @@ function Window:SetSize(Size)
 		self.ShadowHiddenSize = UDim2.new(Size.X.Scale, Size.X.Offset + self.ShadowPadding, 0, self.ShadowPadding)
 		self.Shadow.Size = self.Visible and self.ShadowFullSize or self.ShadowHiddenSize
 	end
+	if self.OuterSwordLayer then
+		self.OuterSwordLayer.Size = Size
+	end
 end
 
 function Window:SetPosition(Position)
 	self.Frame.Position = Position
 	if self.Shadow then
 		self.Shadow.Position = Position
+	end
+	if self.OuterSwordLayer then
+		self.OuterSwordLayer.Position = Position
 	end
 end
 
@@ -3435,8 +3608,14 @@ function Window:SetLogoImage(Image, Color)
 end
 
 function Window:SetBackgroundLogoVisible(Visible)
+	if self.BackgroundLogoState then
+		self.BackgroundLogoState.BackgroundVisible = Visible == true
+	end
 	if self.BackgroundLogo then
 		self.BackgroundLogo.Visible = Visible == true
+	end
+	if self.OuterSwordLayer then
+		self.OuterSwordLayer.Visible = Visible == true and self.Visible == true
 	end
 end
 
@@ -3456,11 +3635,13 @@ function Window:SetBackgroundAnimation(Options)
 					State.StoneColor = nil
 				end
 			end
-		elseif Key == "Speed" or Key == "Intensity" or Key == "Transparency" then
+		elseif Key == "Speed" or Key == "Intensity" or Key == "Transparency" or Key == "OuterSwordSpeed" or Key == "OuterSwordRadiusX" or Key == "OuterSwordRadiusY" then
 			local Number = tonumber(Value)
 			if Number then
 				State[Key] = Number
 			end
+		elseif Key == "OuterSword" then
+			State.OuterSword = Value == true
 		elseif Key == "PrimaryColor" or Key == "SecondaryColor" or Key == "StoneColor" then
 			if typeof(Value) == "Color3" then
 				State[Key] = Value

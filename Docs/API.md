@@ -36,9 +36,13 @@ Window:SetBackgroundLogoVisible(true)
 Window:SetBackgroundLogoShape("Hex")
 Window:SetBackgroundLogoMaterial("Neon")
 Window:SetBackgroundAnimation({
-    Speed = 36,
-    Intensity = 1.35,
-    Transparency = 0.42,
+    Speed = 24,
+    Intensity = 0.75,
+    Transparency = 0.78,
+    OuterSword = true,
+    OuterSwordSpeed = 42,
+    OuterSwordRadiusX = 430,
+    OuterSwordRadiusY = 296,
     PrimaryColor = Color3.fromRGB(255, 255, 255),
 })
 LocitoUI:SetAccent(Color3.fromRGB(0, 218, 222))
@@ -102,22 +106,34 @@ local Window = LocitoUI.new({
     TabHeight = 40,
     TabStyle = "Pill",
     PageSlideOffset = 8,
-    RowStrokeTransparency = 0.72,
+    BorderThickness = 1,
+    RowStrokeTransparency = 0.82,
+    SidebarDividerTransparency = 0.76,
+    AccentLineThemeKey = "Border",
+    AccentLineTransparency = 0.68,
+    LogoGlow = false,
     BackgroundLogo = true,
     BackgroundLogoText = "LC",
     BackgroundLogoName = "Locito",
     BackgroundLogoSize = 190,
     BackgroundLogoPosition = UDim2.new(0.66, 0, 0.56, 0),
-    BackgroundLogoShape = "Sword",
+    BackgroundLogoShape = "Orbit",
     BackgroundLogoMaterial = "Noir",
-    BackgroundLogoIntensity = 1.35,
-    BackgroundLogoTextTransparency = 0.74,
-    BackgroundLogoTextStrokeTransparency = 0.9,
-    BackgroundLogoRotationSpeed = 36,
+    BackgroundLogoIntensity = 0.75,
+    BackgroundLogoTransparency = 0.78,
+    BackgroundLogoGlowTransparency = 0.99,
+    BackgroundLogoTextTransparency = 0.86,
+    BackgroundLogoTextStrokeTransparency = 0.94,
+    BackgroundLogoRotationSpeed = 24,
     BackgroundSwordPosition = UDim2.new(0.5, 0, 0.5, 0),
     BackgroundSwordRotation = 0,
     BackgroundSwordTransparency = 0.42,
+    OuterSword = true,
+    OuterSwordSpeed = 42,
+    OuterSwordRadiusX = 430,
+    OuterSwordRadiusY = 296,
     Shadow = true,
+    ShadowTransparency = 0.74,
 })
 ```
 
@@ -125,6 +141,7 @@ Background animation options:
 
 - Shapes: `Sword`, `Diamond`, `Orbit`, `Hex`, `Cross`, `Shatter`
 - Materials: `Noir`, `Neon`, `Glass`, `Ghost`, `Chrome`, `Wood`
+- Outside sword: `OuterSword`, `OuterSwordSpeed`, `OuterSwordRadiusX`, `OuterSwordRadiusY`
 
 ## Loadstring
 

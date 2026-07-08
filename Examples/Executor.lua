@@ -45,30 +45,43 @@ local Success, ErrorMessage = xpcall(function()
 		TopBarHeight = 54,
 		TabHeight = 40,
 		TabStyle = "Pill",
-		TabSelectedTransparency = 0,
-		TabHoverTransparency = 0.15,
+		TabSelectedTransparency = 0.12,
+		TabHoverTransparency = 0.34,
 		PageSlideOffset = 8,
 		BorderThickness = 1,
-		RowStrokeTransparency = 0.62,
+		RowStrokeTransparency = 0.82,
+		SectionAnimation = true,
+		SidebarDividerTransparency = 0.76,
 		AccentLineThemeKey = "Border",
-		AccentLineTransparency = 0.42,
+		AccentLineTransparency = 0.68,
+		LogoGlow = false,
+		ControlTransparency = 1,
 		BackgroundLogo = true,
 		BackgroundLogoText = "LC",
 		BackgroundLogoName = "Locito",
 		BackgroundLogoSize = 190,
 		BackgroundLogoPosition = UDim2.new(0.66, 0, 0.56, 0),
-		BackgroundLogoShape = "Sword",
+		BackgroundLogoShape = "Orbit",
 		BackgroundLogoMaterial = "Noir",
-		BackgroundLogoIntensity = 1.35,
-		BackgroundLogoTextTransparency = 0.74,
-		BackgroundLogoTextStrokeTransparency = 0.9,
-		BackgroundLogoRotationSpeed = 36,
+		BackgroundLogoIntensity = 0.75,
+		BackgroundLogoTransparency = 0.78,
+		BackgroundLogoGlowTransparency = 0.99,
+		BackgroundLogoRingTransparency = 0.88,
+		BackgroundLogoTextTransparency = 0.86,
+		BackgroundLogoTextStrokeTransparency = 0.94,
+		BackgroundLogoRotationSpeed = 24,
 		BackgroundSwordPosition = UDim2.new(0.5, 0, 0.5, 0),
 		BackgroundSwordSize = UDim2.new(0.62, 0, 0.9, 0),
 		BackgroundSwordRotation = 0,
 		BackgroundSwordTransparency = 0.42,
+		OuterSword = true,
+		OuterSwordSpeed = 42,
+		OuterSwordRadiusX = 430,
+		OuterSwordRadiusY = 296,
+		OuterSwordSize = UDim2.new(0, 72, 0, 146),
 		Shadow = true,
-		ShadowTransparency = 0.42,
+		ShadowTransparency = 0.74,
+		ShadowPadding = 16,
 		ToggleKey = "RightControl",
 		ToggleAnimationTime = 0.18,
 		DisplayOrder = 999999,
@@ -115,6 +128,10 @@ local Success, ErrorMessage = xpcall(function()
 		"Theme: Logo Color",
 		"Theme: Glow Color",
 		"Theme: Stone Color",
+		"Theme: Outside Sword",
+		"Theme: Sword Orbit Speed",
+		"Theme: Sword Orbit Width",
+		"Theme: Sword Orbit Height",
 		"Settings: Status",
 		"Settings: Ping",
 		"Settings: FPS",
@@ -406,7 +423,7 @@ local Success, ErrorMessage = xpcall(function()
 	AnimationStyle:Dropdown({
 		Text = "Shape",
 		Options = { "Sword", "Diamond", "Orbit", "Hex", "Cross", "Shatter" },
-		Default = "Sword",
+		Default = "Orbit",
 		Changed = function(Shape)
 			Window:SetBackgroundLogoShape(Shape)
 		end,
@@ -425,7 +442,7 @@ local Success, ErrorMessage = xpcall(function()
 		Text = "Animation Speed",
 		Min = 0,
 		Max = 80,
-		Default = 36,
+		Default = 24,
 		Step = 2,
 		Changed = function(Value)
 			Window:SetBackgroundAnimation({ Speed = Value })
@@ -436,7 +453,7 @@ local Success, ErrorMessage = xpcall(function()
 		Text = "Pulse Intensity",
 		Min = 0,
 		Max = 2,
-		Default = 1.35,
+		Default = 0.75,
 		Step = 0.05,
 		Decimals = 2,
 		Changed = function(Value)
@@ -448,7 +465,7 @@ local Success, ErrorMessage = xpcall(function()
 		Text = "See Through",
 		Min = 0.16,
 		Max = 0.9,
-		Default = 0.42,
+		Default = 0.78,
 		Step = 0.02,
 		Decimals = 2,
 		Changed = function(Value)
@@ -495,6 +512,49 @@ local Success, ErrorMessage = xpcall(function()
 		},
 		Changed = function(Color)
 			Window:SetBackgroundAnimation({ StoneColor = Color })
+		end,
+	})
+
+	local SwordOrbit = ThemeTab:CreateSection("Outside Sword")
+
+	SwordOrbit:Toggle({
+		Text = "Outside Sword",
+		Default = true,
+		Changed = function(Value)
+			Window:SetBackgroundAnimation({ OuterSword = Value })
+		end,
+	})
+
+	SwordOrbit:Slider({
+		Text = "Orbit Speed",
+		Min = 0,
+		Max = 120,
+		Default = 42,
+		Step = 2,
+		Changed = function(Value)
+			Window:SetBackgroundAnimation({ OuterSwordSpeed = Value })
+		end,
+	})
+
+	SwordOrbit:Slider({
+		Text = "Orbit Width",
+		Min = 360,
+		Max = 560,
+		Default = 430,
+		Step = 10,
+		Changed = function(Value)
+			Window:SetBackgroundAnimation({ OuterSwordRadiusX = Value })
+		end,
+	})
+
+	SwordOrbit:Slider({
+		Text = "Orbit Height",
+		Min = 240,
+		Max = 360,
+		Default = 296,
+		Step = 8,
+		Changed = function(Value)
+			Window:SetBackgroundAnimation({ OuterSwordRadiusY = Value })
 		end,
 	})
 
@@ -608,6 +668,7 @@ local Success, ErrorMessage = xpcall(function()
 		Default = true,
 		Changed = function(Value)
 			Window:SetBackgroundLogoVisible(Value)
+			Window:SetBackgroundAnimation({ OuterSword = Value })
 		end,
 	})
 
