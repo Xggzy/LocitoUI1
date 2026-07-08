@@ -12,6 +12,8 @@ local Success, ErrorMessage = xpcall(function()
 	local LocitoUI = Loader()
 
 	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local Stats = game:GetService("Stats")
 	local Parent = typeof(gethui) == "function" and gethui() or game:GetService("CoreGui")
 	local TestGui = Instance.new("ScreenGui")
 	local CanUseParent = pcall(function()
@@ -50,7 +52,12 @@ local Success, ErrorMessage = xpcall(function()
 		BackgroundLogoText = "LC",
 		BackgroundLogoName = "Locito",
 		BackgroundLogoSize = 190,
+		BackgroundLogoTextTransparency = 0.68,
+		BackgroundLogoTextStrokeTransparency = 0.86,
 		BackgroundLogoRotationSpeed = 28,
+		BackgroundSwordPosition = UDim2.new(0.64, 0, 0.58, 0),
+		BackgroundSwordRotation = -26,
+		BackgroundSwordTransparency = 0.56,
 		Shadow = true,
 		ShadowTransparency = 0.42,
 		ToggleKey = "RightControl",
@@ -81,12 +88,21 @@ local Success, ErrorMessage = xpcall(function()
 		"Player: Auto Sprint",
 		"Player: No Clip",
 		"Player: Infinite Jump",
-		"Settings: Theme",
-		"Settings: Theme Color",
-		"Settings: Background Color",
-		"Settings: Panel Color",
-		"Settings: Border Color",
-		"Settings: Text Color",
+		"Theme: Preset",
+		"Theme: Accent Color",
+		"Theme: Accent Glow",
+		"Theme: Background Color",
+		"Theme: Panel Color",
+		"Theme: Panel Highlight",
+		"Theme: Border Color",
+		"Theme: Text Color",
+		"Theme: Muted Text Color",
+		"Theme: Slider Track",
+		"Settings: Status",
+		"Settings: Ping",
+		"Settings: FPS",
+		"Settings: Network",
+		"Settings: Connection",
 		"Settings: Menu Key",
 		"Settings: Animated Logo",
 	}
@@ -239,11 +255,11 @@ local Success, ErrorMessage = xpcall(function()
 		Default = false,
 	})
 
-	local Settings = Window:CreateTab("Settings", "S")
-	local Menu = Settings:CreateSection("Menu")
+	local ThemeTab = Window:CreateTab("Theme", "T")
+	local ThemeSession = ThemeTab:CreateSection("Theme Session")
 
-	Menu:Dropdown({
-		Text = "Theme",
+	ThemeSession:Dropdown({
+		Text = "Theme Preset",
 		Options = { "Phantom", "Nebula", "Carbon", "Ocean", "Emerald" },
 		Default = "Phantom",
 		Changed = function(Name)
@@ -251,8 +267,8 @@ local Success, ErrorMessage = xpcall(function()
 		end,
 	})
 
-	Menu:ColorPicker({
-		Text = "Theme Color",
+	ThemeSession:ColorPicker({
+		Text = "Accent Color",
 		ApplyToTheme = true,
 		CloseOnSelect = true,
 		Presets = {
@@ -264,7 +280,19 @@ local Success, ErrorMessage = xpcall(function()
 		},
 	})
 
-	Menu:ColorPicker({
+	ThemeSession:ColorPicker({
+		Text = "Accent Glow",
+		ApplyToTheme = "AccentLight",
+		CloseOnSelect = true,
+		Presets = {
+			Color3.fromRGB(84, 255, 255),
+			Color3.fromRGB(255, 160, 205),
+			Color3.fromRGB(190, 164, 255),
+			Color3.fromRGB(135, 241, 183),
+		},
+	})
+
+	ThemeSession:ColorPicker({
 		Text = "Background Color",
 		ApplyToTheme = "Background",
 		CloseOnSelect = true,
@@ -276,7 +304,7 @@ local Success, ErrorMessage = xpcall(function()
 		},
 	})
 
-	Menu:ColorPicker({
+	ThemeSession:ColorPicker({
 		Text = "Panel Color",
 		ApplyToTheme = "Surface",
 		CloseOnSelect = true,
@@ -288,7 +316,19 @@ local Success, ErrorMessage = xpcall(function()
 		},
 	})
 
-	Menu:ColorPicker({
+	ThemeSession:ColorPicker({
+		Text = "Panel Highlight",
+		ApplyToTheme = "SurfaceLight",
+		CloseOnSelect = true,
+		Presets = {
+			Color3.fromRGB(28, 32, 42),
+			Color3.fromRGB(42, 38, 58),
+			Color3.fromRGB(27, 61, 45),
+			Color3.fromRGB(21, 58, 94),
+		},
+	})
+
+	ThemeSession:ColorPicker({
 		Text = "Border Color",
 		ApplyToTheme = "Border",
 		CloseOnSelect = true,
@@ -300,7 +340,7 @@ local Success, ErrorMessage = xpcall(function()
 		},
 	})
 
-	Menu:ColorPicker({
+	ThemeSession:ColorPicker({
 		Text = "Text Color",
 		ApplyToTheme = "Text",
 		CloseOnSelect = true,
@@ -311,6 +351,124 @@ local Success, ErrorMessage = xpcall(function()
 			Color3.fromRGB(231, 245, 255),
 		},
 	})
+
+	ThemeSession:ColorPicker({
+		Text = "Muted Text Color",
+		ApplyToTheme = "SubText",
+		CloseOnSelect = true,
+		Presets = {
+			Color3.fromRGB(143, 150, 162),
+			Color3.fromRGB(180, 160, 185),
+			Color3.fromRGB(143, 186, 162),
+			Color3.fromRGB(135, 174, 202),
+		},
+	})
+
+	ThemeSession:ColorPicker({
+		Text = "Slider Track",
+		ApplyToTheme = "Track",
+		CloseOnSelect = true,
+		Presets = {
+			Color3.fromRGB(28, 32, 40),
+			Color3.fromRGB(56, 58, 66),
+			Color3.fromRGB(42, 88, 65),
+			Color3.fromRGB(42, 84, 116),
+		},
+	})
+
+	local Settings = Window:CreateTab("Settings", "S")
+	local Status = Settings:CreateSection("Status")
+	local ConnectionLabel = Status:Label({
+		Text = "Connection: checking...",
+		Height = 20,
+	})
+	local PingLabel = Status:Label({
+		Text = "Ping: checking...",
+		Height = 20,
+	})
+	local FpsLabel = Status:Label({
+		Text = "FPS: checking...",
+		Height = 20,
+	})
+	local NetworkLabel = Status:Label({
+		Text = "Network: checking...",
+		Height = 20,
+	})
+
+	local function ReadStatsItem(Name)
+		local Display = "N/A"
+		local Value
+
+		pcall(function()
+			local Network = Stats:FindFirstChild("Network")
+			local ServerStatsItem = Network and Network:FindFirstChild("ServerStatsItem")
+			local Item = ServerStatsItem and ServerStatsItem:FindFirstChild(Name)
+			if Item then
+				Display = Item:GetValueString()
+				Value = Item:GetValue()
+			end
+		end)
+
+		return Display, Value
+	end
+
+	local function ReadDataRate(Property)
+		local Value = 0
+		pcall(function()
+			Value = Stats[Property] or 0
+		end)
+		if typeof(Value) ~= "number" then
+			Value = 0
+		end
+		return Value
+	end
+
+	local StatusTimer = 0
+	local StatusConnection
+	StatusConnection = RunService.RenderStepped:Connect(function(DeltaTime)
+		if not Window.Gui or not Window.Gui.Parent then
+			if StatusConnection then
+				StatusConnection:Disconnect()
+			end
+			return
+		end
+
+		StatusTimer += DeltaTime
+		if StatusTimer < 0.65 then
+			return
+		end
+		StatusTimer = 0
+
+		local FrameTime = DeltaTime
+		pcall(function()
+			if Stats.FrameTime and Stats.FrameTime > 0 then
+				FrameTime = Stats.FrameTime
+			end
+		end)
+
+		local Fps = FrameTime > 0 and math.floor((1 / FrameTime) + 0.5) or 0
+		local PingText, PingValue = ReadStatsItem("Data Ping")
+		local Receive = ReadDataRate("DataReceiveKbps")
+		local Send = ReadDataRate("DataSendKbps")
+		local ConnectionText = "Online"
+
+		if PingValue and PingValue <= 80 then
+			ConnectionText = "Good"
+		elseif PingValue and PingValue <= 180 then
+			ConnectionText = "Stable"
+		elseif PingValue then
+			ConnectionText = "High ping"
+		elseif Receive <= 0 and Send <= 0 then
+			ConnectionText = "Waiting for data"
+		end
+
+		ConnectionLabel:Set("Connection: " .. ConnectionText)
+		PingLabel:Set("Ping: " .. PingText)
+		FpsLabel:Set("FPS: " .. tostring(Fps))
+		NetworkLabel:Set(("Network: %.1f in / %.1f out kbps"):format(Receive, Send))
+	end)
+
+	local Menu = Settings:CreateSection("Menu")
 
 	Menu:Keybind({
 		Text = "Menu key",

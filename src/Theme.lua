@@ -192,6 +192,10 @@ function Theme:SetColor(Key, Color)
 
 	local Current = self:Get()
 	Current[Key] = Color
+	if Key == "Background" and Current.Accent then
+		Current.TabActive = Current.Accent:Lerp(Color, 0.72)
+		Current.TabHover = Current.Accent:Lerp(Color, 0.86)
+	end
 	self:Apply()
 
 	for _, Listener in ipairs(self.Listeners) do
@@ -206,10 +210,11 @@ function Theme:SetColors(Values)
 		return false
 	end
 
+	local Current = self:Get()
 	local Changed = false
 	for Key, Color in pairs(Values) do
 		if typeof(Key) == "string" and typeof(Color) == "Color3" then
-			self:Get()[Key] = Color
+			Current[Key] = Color
 			Changed = true
 		end
 	end
@@ -218,9 +223,14 @@ function Theme:SetColors(Values)
 		return false
 	end
 
+	if Current.Accent and Current.Background then
+		Current.TabActive = Current.Accent:Lerp(Current.Background, 0.72)
+		Current.TabHover = Current.Accent:Lerp(Current.Background, 0.86)
+	end
+
 	self:Apply()
 	for _, Listener in ipairs(self.Listeners) do
-		task.spawn(Listener, self:Get(), self.Current)
+		task.spawn(Listener, Current, self.Current)
 	end
 
 	return true

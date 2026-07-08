@@ -33,9 +33,11 @@ Window:SetLogoText("LC")
 Window:SetLogoImage("rbxassetid://123456789")
 Window:SetToggleKey("RightControl")
 Window:SetBackgroundLogoVisible(true)
+LocitoUI:SetAccent(Color3.fromRGB(0, 218, 222))
 LocitoUI:SetThemeColor("Background", Color3.fromRGB(8, 10, 14))
 LocitoUI:SetThemeColors({
     Surface = Color3.fromRGB(16, 19, 25),
+    SurfaceLight = Color3.fromRGB(28, 32, 42),
     Border = Color3.fromRGB(33, 38, 48),
 })
 Window:Hide()
@@ -96,7 +98,12 @@ local Window = LocitoUI.new({
     BackgroundLogoText = "LC",
     BackgroundLogoName = "Locito",
     BackgroundLogoSize = 190,
+    BackgroundLogoTextTransparency = 0.68,
+    BackgroundLogoTextStrokeTransparency = 0.86,
     BackgroundLogoRotationSpeed = 28,
+    BackgroundSwordPosition = UDim2.new(0.64, 0, 0.58, 0),
+    BackgroundSwordRotation = -26,
+    BackgroundSwordTransparency = 0.56,
     Shadow = true,
 })
 ```
@@ -261,6 +268,8 @@ Section:ColorPicker({
     end,
 })
 ```
+
+Use `ApplyToTheme = "Background"` or any other theme color key to make a color picker update that part of the active theme directly.
 
 ## Notifications
 

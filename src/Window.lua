@@ -292,13 +292,49 @@ function Window.new(Settings)
 		local InnerDiamondStroke = Utility:Stroke(InnerDiamond, CurrentTheme.AccentLight, 1, Settings.BackgroundLogoRingTransparency or 0.72)
 		Theme:Register(InnerDiamondStroke, "Color", "AccentLight")
 
+		local SparkGroup = Utility:Create("Frame", {
+			Name = "SparkOrbit",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = BackgroundLogo,
+		})
+		local SparkDots = {}
+		local SparkPositions = {
+			{ X = 0.18, Y = 0.3, Size = 5 },
+			{ X = 0.78, Y = 0.22, Size = 4 },
+			{ X = 0.74, Y = 0.78, Size = 6 },
+		}
+		for Index, Data in ipairs(SparkPositions) do
+			local Spark = Utility:Create("Frame", {
+				Name = "Spark" .. Index,
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.new(Data.X, 0, Data.Y, 0),
+				Size = UDim2.new(0, Data.Size, 0, Data.Size),
+				BackgroundColor3 = CurrentTheme.AccentLight,
+				BackgroundTransparency = 0.6,
+				BorderSizePixel = 0,
+				ZIndex = 0,
+				Parent = SparkGroup,
+			})
+			Utility:Round(Spark, Data.Size)
+			Theme:Register(Spark, "BackgroundColor3", "AccentLight")
+			table.insert(SparkDots, Spark)
+		end
+
+		local SwordBaseRotation = Settings.BackgroundSwordRotation or -24
+		local SwordTransparency = Settings.BackgroundSwordTransparency or 0.56
 		local SwordGroup = Utility:Create("Frame", {
 			Name = "SwordStoneMark",
 			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.new(0.5, 0, 0.5, 0),
-			Size = UDim2.new(0.72, 0, 0.86, 0),
+			Position = Settings.BackgroundSwordPosition or UDim2.new(0.64, 0, 0.58, 0),
+			Size = Settings.BackgroundSwordSize or UDim2.new(0.5, 0, 0.78, 0),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
+			Rotation = SwordBaseRotation,
 			ZIndex = 0,
 			Parent = BackgroundLogo,
 		})
@@ -309,7 +345,7 @@ function Window.new(Settings)
 			Position = UDim2.new(0.5, 0, 0.06, 0),
 			Size = UDim2.new(0, 10, 0.52, 0),
 			BackgroundColor3 = CurrentTheme.AccentLight,
-			BackgroundTransparency = 0.58,
+			BackgroundTransparency = SwordTransparency,
 			BorderSizePixel = 0,
 			ZIndex = 0,
 			Parent = SwordGroup,
@@ -323,7 +359,7 @@ function Window.new(Settings)
 			Position = UDim2.new(0.5, 0, 0.07, 0),
 			Size = UDim2.new(0, 22, 0, 22),
 			BackgroundColor3 = CurrentTheme.AccentLight,
-			BackgroundTransparency = 0.58,
+			BackgroundTransparency = SwordTransparency,
 			BorderSizePixel = 0,
 			Rotation = 45,
 			ZIndex = 0,
@@ -338,7 +374,7 @@ function Window.new(Settings)
 			Position = UDim2.new(0.5, 0, 0.58, 0),
 			Size = UDim2.new(0.5, 0, 0, 9),
 			BackgroundColor3 = CurrentTheme.Accent,
-			BackgroundTransparency = 0.52,
+			BackgroundTransparency = math.max(SwordTransparency - 0.04, 0),
 			BorderSizePixel = 0,
 			ZIndex = 0,
 			Parent = SwordGroup,
@@ -352,7 +388,7 @@ function Window.new(Settings)
 			Position = UDim2.new(0.5, 0, 0.58, 0),
 			Size = UDim2.new(0, 16, 0.2, 0),
 			BackgroundColor3 = CurrentTheme.SurfaceLight,
-			BackgroundTransparency = 0.3,
+			BackgroundTransparency = math.max(SwordTransparency - 0.16, 0),
 			BorderSizePixel = 0,
 			ZIndex = 0,
 			Parent = SwordGroup,
@@ -366,7 +402,7 @@ function Window.new(Settings)
 			Position = UDim2.new(0.5, 0, 0.78, 0),
 			Size = UDim2.new(0, 24, 0, 10),
 			BackgroundColor3 = CurrentTheme.Accent,
-			BackgroundTransparency = 0.52,
+			BackgroundTransparency = math.max(SwordTransparency - 0.04, 0),
 			BorderSizePixel = 0,
 			ZIndex = 0,
 			Parent = SwordGroup,
@@ -380,7 +416,7 @@ function Window.new(Settings)
 			Position = UDim2.new(0.5, 0, 1, 0),
 			Size = UDim2.new(0.62, 0, 0.2, 0),
 			BackgroundColor3 = CurrentTheme.SurfaceLight,
-			BackgroundTransparency = 0.38,
+			BackgroundTransparency = math.max(SwordTransparency - 0.12, 0),
 			BorderSizePixel = 0,
 			Rotation = -2,
 			ZIndex = 0,
@@ -401,7 +437,7 @@ function Window.new(Settings)
 			Font = Enum.Font.GothamBlack,
 			Text = Settings.BackgroundLogoName or Settings.Name or "Locito",
 			TextColor3 = CurrentTheme.Accent,
-			TextTransparency = 0.58,
+			TextTransparency = math.max(SwordTransparency - 0.08, 0),
 			TextScaled = true,
 			ZIndex = 0,
 			Parent = SwordGroup,
@@ -430,7 +466,9 @@ function Window.new(Settings)
 			Font = Settings.BackgroundLogoFont or Enum.Font.GothamBlack,
 			Text = BackgroundLogoText,
 			TextColor3 = CurrentTheme.Accent,
-			TextTransparency = Settings.BackgroundLogoTextTransparency or 0.82,
+			TextStrokeColor3 = CurrentTheme.AccentLight,
+			TextStrokeTransparency = Settings.BackgroundLogoTextStrokeTransparency or 0.88,
+			TextTransparency = Settings.BackgroundLogoTextTransparency or 0.72,
 			TextSize = Settings.BackgroundLogoTextSize or math.floor(BackgroundLogoSize * 0.42),
 			TextXAlignment = Enum.TextXAlignment.Center,
 			TextYAlignment = Enum.TextYAlignment.Center,
@@ -438,6 +476,7 @@ function Window.new(Settings)
 			Parent = BackgroundLogo,
 		})
 		Theme:Register(LogoWatermark, "TextColor3", "Accent")
+		Theme:Register(LogoWatermark, "TextStrokeColor3", "AccentLight")
 
 		self.BackgroundLogo = BackgroundLogo
 		self.BackgroundLogoText = LogoWatermark
@@ -453,13 +492,17 @@ function Window.new(Settings)
 			InnerRing.Rotation = -Rotation * 1.35
 			Diamond.Rotation = 45 - Rotation * 0.55
 			InnerDiamond.Rotation = 45 + Rotation * 0.7
-			SwordGroup.Rotation = math.sin(os.clock() * 1.6) * 3
-			Blade.BackgroundTransparency = math.clamp(0.58 + Pulse * 0.08, 0.44, 0.72)
+			SparkGroup.Rotation = -Rotation * 1.8
+			SwordGroup.Rotation = SwordBaseRotation + math.sin(os.clock() * 1.6) * 4
+			Blade.BackgroundTransparency = math.clamp(SwordTransparency + Pulse * 0.08, 0.42, 0.76)
 			Tip.BackgroundTransparency = Blade.BackgroundTransparency
+			for Index, Spark in ipairs(SparkDots) do
+				Spark.BackgroundTransparency = math.clamp(0.6 + math.sin(os.clock() * 3 + Index) * 0.22, 0.34, 0.86)
+			end
 			GlowDisc.BackgroundTransparency = math.clamp((Settings.BackgroundLogoGlowTransparency or 0.92) + Pulse * 0.035, 0.84, 0.97)
 			GlowDisc.Size = UDim2.new(0.82 + Pulse * 0.03, 0, 0.82 + Pulse * 0.03, 0)
 			LogoWatermark.Rotation = -Rotation
-			LogoWatermark.TextTransparency = math.clamp((Settings.BackgroundLogoTextTransparency or 0.82) + Pulse * 0.04, 0.68, 0.92)
+			LogoWatermark.TextTransparency = math.clamp((Settings.BackgroundLogoTextTransparency or 0.72) + Pulse * 0.04, 0.54, 0.86)
 		end))
 	end
 
