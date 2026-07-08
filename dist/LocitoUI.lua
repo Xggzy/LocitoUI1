@@ -244,6 +244,28 @@ Theme.Themes = {
 		AnimationSpeed = 0.22,
 	},
 
+	Noir = {
+		Background = Color3.fromRGB(3, 3, 5),
+		Secondary = Color3.fromRGB(8, 8, 10),
+		Surface = Color3.fromRGB(13, 13, 16),
+		SurfaceLight = Color3.fromRGB(28, 28, 32),
+		Accent = Color3.fromRGB(242, 242, 242),
+		AccentLight = Color3.fromRGB(255, 255, 255),
+		Text = Color3.fromRGB(255, 255, 255),
+		SubText = Color3.fromRGB(184, 184, 190),
+		Muted = Color3.fromRGB(102, 102, 110),
+		Border = Color3.fromRGB(236, 236, 242),
+		TabActive = Color3.fromRGB(32, 32, 36),
+		TabHover = Color3.fromRGB(22, 22, 26),
+		Track = Color3.fromRGB(48, 48, 54),
+		Shadow = Color3.fromRGB(0, 0, 0),
+		Success = Color3.fromRGB(220, 255, 235),
+		Warning = Color3.fromRGB(255, 232, 172),
+		Error = Color3.fromRGB(255, 154, 154),
+		CornerRadius = 10,
+		AnimationSpeed = 0.18,
+	},
+
 	Phantom = {
 		Background = Color3.fromRGB(8, 10, 14),
 		Secondary = Color3.fromRGB(10, 12, 17),
@@ -2415,10 +2437,20 @@ function Window.new(Settings)
 		local BackgroundLogoSize = Settings.BackgroundLogoSize or (PreviewLayout and 176 or 150)
 		local BackgroundLogoText = Settings.BackgroundLogoText or Settings.LogoText or "L"
 		local BackgroundLogoSpeed = Settings.BackgroundLogoSpeed or Settings.BackgroundLogoRotationSpeed or 22
+		local BackgroundLogoState = {
+			Shape = Settings.BackgroundLogoShape or Settings.BackgroundShape or "Sword",
+			Material = Settings.BackgroundLogoMaterial or Settings.BackgroundMaterial or "Noir",
+			Speed = BackgroundLogoSpeed,
+			Intensity = Settings.BackgroundLogoIntensity or Settings.BackgroundAnimationIntensity or 1.25,
+			Transparency = Settings.BackgroundLogoTransparency or Settings.BackgroundSwordTransparency,
+			PrimaryColor = Settings.BackgroundLogoPrimaryColor,
+			SecondaryColor = Settings.BackgroundLogoSecondaryColor,
+			StoneColor = Settings.BackgroundLogoStoneColor,
+		}
 		local BackgroundLogo = Utility:Create("Frame", {
 			Name = "AnimatedBackgroundLogo",
 			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = Settings.BackgroundLogoPosition or UDim2.new(1, -126, 1, -80),
+			Position = Settings.BackgroundLogoPosition or (PreviewLayout and UDim2.new(0.66, 0, 0.58, 0) or UDim2.new(1, -126, 1, -80)),
 			Size = UDim2.new(0, BackgroundLogoSize, 0, BackgroundLogoSize),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
@@ -2510,9 +2542,12 @@ function Window.new(Settings)
 		})
 		local SparkDots = {}
 		local SparkPositions = {
-			{ X = 0.18, Y = 0.3, Size = 5 },
-			{ X = 0.78, Y = 0.22, Size = 4 },
-			{ X = 0.74, Y = 0.78, Size = 6 },
+			{ X = 0.16, Y = 0.3, Size = 5 },
+			{ X = 0.5, Y = 0.12, Size = 4 },
+			{ X = 0.82, Y = 0.28, Size = 5 },
+			{ X = 0.82, Y = 0.72, Size = 6 },
+			{ X = 0.5, Y = 0.88, Size = 4 },
+			{ X = 0.16, Y = 0.7, Size = 5 },
 		}
 		for Index, Data in ipairs(SparkPositions) do
 			local Spark = Utility:Create("Frame", {
@@ -2531,13 +2566,55 @@ function Window.new(Settings)
 			table.insert(SparkDots, Spark)
 		end
 
-		local SwordBaseRotation = Settings.BackgroundSwordRotation or -24
-		local SwordTransparency = Settings.BackgroundSwordTransparency or 0.56
+		local CrossLine = Utility:Create("Frame", {
+			Name = "CrossLine",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(0, 2, 1, -18),
+			BackgroundColor3 = CurrentTheme.Accent,
+			BackgroundTransparency = 0.72,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = BackgroundLogo,
+		})
+		Theme:Register(CrossLine, "BackgroundColor3", "Accent")
+
+		local HexGroup = Utility:Create("Frame", {
+			Name = "HexMark",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(0.7, 0, 0.7, 0),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Visible = false,
+			ZIndex = 0,
+			Parent = BackgroundLogo,
+		})
+		local HexLines = {}
+		for Index, Rotation in ipairs({ 0, 60, -60 }) do
+			local HexLine = Utility:Create("Frame", {
+				Name = "HexLine" .. Index,
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.new(0.5, 0, 0.5, 0),
+				Size = UDim2.new(1, 0, 0, 2),
+				BackgroundColor3 = CurrentTheme.Accent,
+				BackgroundTransparency = 0.62,
+				BorderSizePixel = 0,
+				Rotation = Rotation,
+				ZIndex = 0,
+				Parent = HexGroup,
+			})
+			Theme:Register(HexLine, "BackgroundColor3", "Accent")
+			table.insert(HexLines, HexLine)
+		end
+
+		local SwordBaseRotation = Settings.BackgroundSwordRotation or 0
+		local SwordTransparency = Settings.BackgroundSwordTransparency or 0.44
 		local SwordGroup = Utility:Create("Frame", {
 			Name = "SwordStoneMark",
 			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = Settings.BackgroundSwordPosition or UDim2.new(0.64, 0, 0.58, 0),
-			Size = Settings.BackgroundSwordSize or UDim2.new(0.5, 0, 0.78, 0),
+			Position = Settings.BackgroundSwordPosition or UDim2.new(0.5, 0, 0.5, 0),
+			Size = Settings.BackgroundSwordSize or UDim2.new(0.62, 0, 0.9, 0),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			Rotation = SwordBaseRotation,
@@ -2684,31 +2761,224 @@ function Window.new(Settings)
 		Theme:Register(LogoWatermark, "TextColor3", "Accent")
 		Theme:Register(LogoWatermark, "TextStrokeColor3", "AccentLight")
 
+		local function ClampNumber(Value, Min, Max, Default)
+			local Number = tonumber(Value)
+			if not Number then
+				return Default
+			end
+			return math.clamp(Number, Min, Max)
+		end
+
+		local function ReadColor(Value, Fallback)
+			if typeof(Value) == "Color3" then
+				return Value
+			end
+			return Fallback
+		end
+
+		local function ApplyFrame(Object, Color, Transparency)
+			if Object then
+				Object.BackgroundColor3 = Color
+				if Transparency then
+					Object.BackgroundTransparency = Transparency
+				end
+			end
+		end
+
+		local function ApplyStroke(Stroke, Color, Transparency, Thickness)
+			if Stroke then
+				Stroke.Color = Color
+				if Transparency then
+					Stroke.Transparency = Transparency
+				end
+				if Thickness then
+					Stroke.Thickness = Thickness
+				end
+			end
+		end
+
+		local function GetMaterial()
+			local ActiveTheme = Theme:Get()
+			local Material = string.lower(tostring(BackgroundLogoState.Material or "Noir"))
+			local Primary = ActiveTheme.Accent
+			local Secondary = ActiveTheme.AccentLight
+			local StoneColor = ActiveTheme.SurfaceLight
+			local Transparency = 0.44
+			local GlowTransparency = 0.86
+			local StrokeTransparency = 0.48
+
+			if Material == "neon" then
+				Primary = Color3.fromRGB(255, 255, 255)
+				Secondary = ActiveTheme.AccentLight or ActiveTheme.Accent
+				StoneColor = ActiveTheme.Accent
+				Transparency = 0.26
+				GlowTransparency = 0.78
+				StrokeTransparency = 0.22
+			elseif Material == "glass" then
+				Primary = ActiveTheme.AccentLight or Color3.fromRGB(255, 255, 255)
+				Secondary = ActiveTheme.Accent
+				StoneColor = ActiveTheme.SurfaceLight
+				Transparency = 0.58
+				GlowTransparency = 0.9
+				StrokeTransparency = 0.6
+			elseif Material == "ghost" or Material == "see through" or Material == "see-through" then
+				Primary = Color3.fromRGB(255, 255, 255)
+				Secondary = ActiveTheme.SubText or Color3.fromRGB(190, 190, 196)
+				StoneColor = ActiveTheme.Background
+				Transparency = 0.74
+				GlowTransparency = 0.94
+				StrokeTransparency = 0.72
+			elseif Material == "wood" or Material == "wooden" then
+				Primary = Color3.fromRGB(214, 170, 104)
+				Secondary = Color3.fromRGB(104, 70, 38)
+				StoneColor = Color3.fromRGB(61, 42, 27)
+				Transparency = 0.36
+				GlowTransparency = 0.88
+				StrokeTransparency = 0.42
+			elseif Material == "chrome" then
+				Primary = Color3.fromRGB(255, 255, 255)
+				Secondary = Color3.fromRGB(150, 150, 158)
+				StoneColor = Color3.fromRGB(26, 26, 30)
+				Transparency = 0.32
+				GlowTransparency = 0.84
+				StrokeTransparency = 0.3
+			elseif Material == "custom" then
+				Transparency = 0.42
+				GlowTransparency = 0.84
+				StrokeTransparency = 0.36
+			else
+				Primary = Color3.fromRGB(255, 255, 255)
+				Secondary = Color3.fromRGB(18, 18, 22)
+				StoneColor = Color3.fromRGB(8, 8, 10)
+				Transparency = 0.4
+				GlowTransparency = 0.88
+				StrokeTransparency = 0.42
+			end
+
+			return {
+				Primary = ReadColor(BackgroundLogoState.PrimaryColor, Primary),
+				Secondary = ReadColor(BackgroundLogoState.SecondaryColor, Secondary),
+				Stone = ReadColor(BackgroundLogoState.StoneColor, StoneColor),
+				Transparency = ClampNumber(BackgroundLogoState.Transparency, 0.16, 0.9, Transparency),
+				GlowTransparency = GlowTransparency,
+				StrokeTransparency = StrokeTransparency,
+			}
+		end
+
+		local function ApplyBackgroundLogoStyle()
+			local Material = GetMaterial()
+			local Shape = string.lower(tostring(BackgroundLogoState.Shape or "Sword"))
+			local Intensity = ClampNumber(BackgroundLogoState.Intensity, 0, 2, 1.25)
+			local Transparency = Material.Transparency
+			local RingTransparency = math.clamp(Transparency - 0.14, 0.12, 0.92)
+			local SoftTransparency = math.clamp(Transparency + 0.16, 0.22, 0.96)
+			local HeavyTransparency = math.clamp(Transparency - 0.18, 0.08, 0.86)
+			local GlowTransparency = math.clamp(Material.GlowTransparency - Intensity * 0.05, 0.72, 0.97)
+			local StrokeTransparency = math.clamp(Material.StrokeTransparency - Intensity * 0.08, 0.08, 0.88)
+
+			local ShowsSword = Shape == "sword" or Shape == "blade" or Shape == "shatter"
+			local ShowsDiamond = Shape == "sword" or Shape == "diamond" or Shape == "cross" or Shape == "shatter"
+			local ShowsHex = Shape == "hex" or Shape == "shatter"
+			local ShowsCross = Shape == "cross" or Shape == "orbit"
+			local ShowsSpoke = Shape ~= "blade" and Shape ~= "hex"
+
+			SwordGroup.Visible = ShowsSword
+			Diamond.Visible = ShowsDiamond
+			InnerDiamond.Visible = ShowsDiamond
+			HexGroup.Visible = ShowsHex
+			CrossLine.Visible = ShowsCross
+			Spoke.Visible = ShowsSpoke
+			LogoWatermark.Visible = Shape ~= "blade"
+
+			SwordGroup.Position = Settings.BackgroundSwordPosition or UDim2.new(0.5, 0, 0.5, 0)
+			SwordGroup.Size = Settings.BackgroundSwordSize or (Shape == "blade" and UDim2.new(0.48, 0, 0.92, 0) or UDim2.new(0.62, 0, 0.9, 0))
+			Diamond.Size = Shape == "diamond" and UDim2.new(0.58, 0, 0.58, 0) or UDim2.new(0.46, 0, 0.46, 0)
+			InnerDiamond.Size = Shape == "diamond" and UDim2.new(0.36, 0, 0.36, 0) or UDim2.new(0.28, 0, 0.28, 0)
+			HexGroup.Size = Shape == "shatter" and UDim2.new(0.88, 0, 0.88, 0) or UDim2.new(0.7, 0, 0.7, 0)
+
+			ApplyFrame(GlowDisc, Material.Primary, GlowTransparency)
+			ApplyFrame(Blade, Material.Primary, HeavyTransparency)
+			ApplyFrame(Tip, Material.Primary, HeavyTransparency)
+			ApplyFrame(Guard, Material.Secondary, Transparency)
+			ApplyFrame(Grip, Material.Stone, math.clamp(Transparency - 0.16, 0.04, 0.84))
+			ApplyFrame(Pommel, Material.Secondary, Transparency)
+			ApplyFrame(Stone, Material.Stone, math.clamp(Transparency - 0.1, 0.04, 0.86))
+			ApplyFrame(Spoke, Material.Primary, SoftTransparency)
+			ApplyFrame(CrossLine, Material.Primary, SoftTransparency)
+
+			for _, Spark in ipairs(SparkDots) do
+				ApplyFrame(Spark, Material.Primary, math.clamp(Transparency + 0.08, 0.22, 0.88))
+			end
+
+			for _, HexLine in ipairs(HexLines) do
+				ApplyFrame(HexLine, Material.Primary, RingTransparency)
+			end
+
+			ApplyStroke(OuterStroke, Material.Primary, RingTransparency, Shape == "orbit" and 3 or 2)
+			ApplyStroke(InnerStroke, Material.Secondary, SoftTransparency, Shape == "orbit" and 2 or 1)
+			ApplyStroke(DiamondStroke, Material.Primary, StrokeTransparency, Shape == "diamond" and 3 or 2)
+			ApplyStroke(InnerDiamondStroke, Material.Secondary, SoftTransparency, Shape == "diamond" and 2 or 1)
+			ApplyStroke(StoneStroke, Material.Primary, SoftTransparency, 1)
+
+			LogoWatermark.TextColor3 = Material.Primary
+			LogoWatermark.TextStrokeColor3 = Material.Secondary
+			LogoWatermark.TextTransparency = math.clamp(Transparency + 0.18, 0.42, 0.9)
+			LogoWatermark.TextStrokeTransparency = math.clamp(Transparency + 0.28, 0.54, 0.95)
+			Inscription.TextColor3 = Material.Primary
+			Inscription.TextTransparency = math.clamp(Transparency + 0.02, 0.28, 0.9)
+
+			BackgroundLogoState._LastMaterial = Material
+		end
+
 		self.BackgroundLogo = BackgroundLogo
 		self.BackgroundLogoText = LogoWatermark
+		self.BackgroundLogoState = BackgroundLogoState
+		self.BackgroundLogoStyleApplier = ApplyBackgroundLogoStyle
+		ApplyBackgroundLogoStyle()
+
+		local BackgroundThemeDisconnect = Theme:OnChanged(function()
+			task.defer(ApplyBackgroundLogoStyle)
+		end)
+		table.insert(self.Connections, { Disconnect = BackgroundThemeDisconnect })
 
 		table.insert(self.Connections, RunService.RenderStepped:Connect(function(DeltaTime)
 			if not BackgroundLogo.Parent then
 				return
 			end
 
-			local Rotation = (BackgroundLogo.Rotation + DeltaTime * BackgroundLogoSpeed) % 360
-			local Pulse = math.sin(os.clock() * 2.4)
+			local Speed = ClampNumber(BackgroundLogoState.Speed, 0, 90, BackgroundLogoSpeed)
+			local Intensity = ClampNumber(BackgroundLogoState.Intensity, 0, 2, 1.25)
+			local Material = BackgroundLogoState._LastMaterial or GetMaterial()
+			local Transparency = Material.Transparency
+			local Rotation = (BackgroundLogo.Rotation + DeltaTime * Speed) % 360
+			local Pulse = math.sin(os.clock() * (2.4 + Intensity))
+			local Shape = string.lower(tostring(BackgroundLogoState.Shape or "Sword"))
 			BackgroundLogo.Rotation = Rotation
 			InnerRing.Rotation = -Rotation * 1.35
 			Diamond.Rotation = 45 - Rotation * 0.55
 			InnerDiamond.Rotation = 45 + Rotation * 0.7
+			HexGroup.Rotation = Rotation * 1.2
+			CrossLine.Rotation = -Rotation * 1.6
 			SparkGroup.Rotation = -Rotation * 1.8
-			SwordGroup.Rotation = SwordBaseRotation + math.sin(os.clock() * 1.6) * 4
-			Blade.BackgroundTransparency = math.clamp(SwordTransparency + Pulse * 0.08, 0.42, 0.76)
+			SwordGroup.Rotation = SwordBaseRotation + math.sin(os.clock() * (1.6 + Intensity * 0.4)) * (2 + Intensity * 3)
+			SwordGroup.Position = Settings.BackgroundSwordPosition or UDim2.new(0.5, math.sin(os.clock() * 1.4) * Intensity * 2, 0.5, math.cos(os.clock() * 1.2) * Intensity * 2)
+			Blade.BackgroundTransparency = math.clamp(Transparency - 0.18 + Pulse * 0.08, 0.08, 0.86)
 			Tip.BackgroundTransparency = Blade.BackgroundTransparency
 			for Index, Spark in ipairs(SparkDots) do
-				Spark.BackgroundTransparency = math.clamp(0.6 + math.sin(os.clock() * 3 + Index) * 0.22, 0.34, 0.86)
+				local SparkPulse = math.sin(os.clock() * (3 + Intensity) + Index)
+				local SparkSize = 4 + (Index % 3) + math.max(SparkPulse, 0) * Intensity * 3
+				Spark.BackgroundTransparency = math.clamp(Transparency + 0.12 + SparkPulse * 0.22, 0.18, 0.9)
+				Spark.Size = UDim2.new(0, SparkSize, 0, SparkSize)
 			end
-			GlowDisc.BackgroundTransparency = math.clamp((Settings.BackgroundLogoGlowTransparency or 0.92) + Pulse * 0.035, 0.84, 0.97)
-			GlowDisc.Size = UDim2.new(0.82 + Pulse * 0.03, 0, 0.82 + Pulse * 0.03, 0)
+			GlowDisc.BackgroundTransparency = math.clamp((Material.GlowTransparency or 0.88) + Pulse * 0.05, 0.72, 0.97)
+			GlowDisc.Size = UDim2.new(0.82 + Pulse * 0.04 * Intensity, 0, 0.82 + Pulse * 0.04 * Intensity, 0)
 			LogoWatermark.Rotation = -Rotation
-			LogoWatermark.TextTransparency = math.clamp((Settings.BackgroundLogoTextTransparency or 0.72) + Pulse * 0.04, 0.54, 0.86)
+			LogoWatermark.TextTransparency = math.clamp(Transparency + 0.18 + Pulse * 0.04, 0.42, 0.9)
+			if Shape == "shatter" then
+				Spoke.Rotation = 24 + math.sin(os.clock() * 2.8) * 8
+			else
+				Spoke.Rotation = 0
+			end
 		end))
 	end
 
@@ -3168,6 +3438,50 @@ function Window:SetBackgroundLogoVisible(Visible)
 	if self.BackgroundLogo then
 		self.BackgroundLogo.Visible = Visible == true
 	end
+end
+
+function Window:SetBackgroundAnimation(Options)
+	if not self.BackgroundLogoState or typeof(Options) ~= "table" then
+		return false
+	end
+
+	local State = self.BackgroundLogoState
+	for Key, Value in pairs(Options) do
+		if Key == "Shape" or Key == "Material" then
+			if typeof(Value) == "string" and Value ~= "" then
+				State[Key] = Value
+				if Key == "Material" and string.lower(Value) ~= "custom" then
+					State.PrimaryColor = nil
+					State.SecondaryColor = nil
+					State.StoneColor = nil
+				end
+			end
+		elseif Key == "Speed" or Key == "Intensity" or Key == "Transparency" then
+			local Number = tonumber(Value)
+			if Number then
+				State[Key] = Number
+			end
+		elseif Key == "PrimaryColor" or Key == "SecondaryColor" or Key == "StoneColor" then
+			if typeof(Value) == "Color3" then
+				State[Key] = Value
+				State.Material = "Custom"
+			end
+		end
+	end
+
+	if self.BackgroundLogoStyleApplier then
+		self.BackgroundLogoStyleApplier()
+	end
+
+	return true
+end
+
+function Window:SetBackgroundLogoShape(Shape)
+	return self:SetBackgroundAnimation({ Shape = Shape })
+end
+
+function Window:SetBackgroundLogoMaterial(Material)
+	return self:SetBackgroundAnimation({ Material = Material })
 end
 
 function Window:SetToggleKey(Key)

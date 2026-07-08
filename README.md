@@ -26,9 +26,10 @@ Built so far:
 - Simple color picker
 - Notifications
 - In-memory config module
-- Premium `Phantom` style preset
+- Premium `Phantom` and `Noir` style presets
 - Animated background logo mark
 - Runtime theme color editing
+- Runtime background animation controls
 
 ## Folder Structure
 
@@ -95,7 +96,7 @@ Movement:Button({
 
 You can add themes, adjust the window layout, and customize individual controls.
 
-For a compact preview-style dark layout, use the built-in `Phantom` theme with `Layout = "Preview"`:
+For a compact fancy black/white layout, use the built-in `Noir` theme with `Layout = "Preview"`:
 
 ```lua
 local Window = LocitoUI.new({
@@ -103,7 +104,7 @@ local Window = LocitoUI.new({
     TitleAccent = "Hub",
     Version = "v2.0",
     Subtitle = false,
-    Theme = "Phantom",
+    Theme = "Noir",
     Layout = "Preview",
     LogoText = "L",
     -- LogoImage = "rbxassetid://123456789",
@@ -119,12 +120,16 @@ local Window = LocitoUI.new({
     BackgroundLogoText = "LC",
     BackgroundLogoName = "Locito",
     BackgroundLogoSize = 190,
-    BackgroundLogoTextTransparency = 0.68,
-    BackgroundLogoTextStrokeTransparency = 0.86,
-    BackgroundLogoRotationSpeed = 28,
-    BackgroundSwordPosition = UDim2.new(0.64, 0, 0.58, 0),
-    BackgroundSwordRotation = -26,
-    BackgroundSwordTransparency = 0.56,
+    BackgroundLogoPosition = UDim2.new(0.66, 0, 0.56, 0),
+    BackgroundLogoShape = "Sword",
+    BackgroundLogoMaterial = "Noir",
+    BackgroundLogoIntensity = 1.35,
+    BackgroundLogoTextTransparency = 0.74,
+    BackgroundLogoTextStrokeTransparency = 0.9,
+    BackgroundLogoRotationSpeed = 36,
+    BackgroundSwordPosition = UDim2.new(0.5, 0, 0.5, 0),
+    BackgroundSwordRotation = 0,
+    BackgroundSwordTransparency = 0.42,
     Shadow = true,
     ToggleKey = "RightControl",
     ToggleAnimationTime = 0.18,
@@ -138,6 +143,14 @@ Window:SetLogoText("LC")
 Window:SetLogoImage("rbxassetid://123456789")
 Window:SetToggleKey("RightControl")
 Window:SetBackgroundLogoVisible(true)
+Window:SetBackgroundLogoShape("Hex")
+Window:SetBackgroundLogoMaterial("Neon")
+Window:SetBackgroundAnimation({
+    Speed = 36,
+    Intensity = 1.35,
+    Transparency = 0.42,
+    PrimaryColor = Color3.fromRGB(255, 255, 255),
+})
 LocitoUI:SetAccent(Color3.fromRGB(0, 218, 222))
 LocitoUI:SetThemeColor("Background", Color3.fromRGB(8, 10, 14))
 LocitoUI:SetThemeColors({
@@ -150,7 +163,7 @@ Window:Show()
 Window:Toggle()
 ```
 
-The included demo also has a dedicated `Theme` tab, live status labels for ping/FPS/network, a `Menu key` keybind, an animated logo toggle, and a local feature search box.
+The included demo also has a dedicated `Theme` tab, background shape/material animation controls, live status labels for ping/FPS/network, a `Menu key` keybind, an animated logo toggle, and a local feature search box.
 
 ```lua
 LocitoUI:AddTheme("Candy", {

@@ -36,7 +36,7 @@ local Success, ErrorMessage = xpcall(function()
 		Version = "v2.0",
 		Subtitle = false,
 		LogoText = "L",
-		Theme = "Phantom",
+		Theme = "Noir",
 		Layout = "Preview",
 		Parent = Parent,
 		Width = 700,
@@ -48,16 +48,25 @@ local Success, ErrorMessage = xpcall(function()
 		TabSelectedTransparency = 0,
 		TabHoverTransparency = 0.15,
 		PageSlideOffset = 8,
+		BorderThickness = 1,
+		RowStrokeTransparency = 0.62,
+		AccentLineThemeKey = "Border",
+		AccentLineTransparency = 0.42,
 		BackgroundLogo = true,
 		BackgroundLogoText = "LC",
 		BackgroundLogoName = "Locito",
 		BackgroundLogoSize = 190,
-		BackgroundLogoTextTransparency = 0.68,
-		BackgroundLogoTextStrokeTransparency = 0.86,
-		BackgroundLogoRotationSpeed = 28,
-		BackgroundSwordPosition = UDim2.new(0.64, 0, 0.58, 0),
-		BackgroundSwordRotation = -26,
-		BackgroundSwordTransparency = 0.56,
+		BackgroundLogoPosition = UDim2.new(0.66, 0, 0.56, 0),
+		BackgroundLogoShape = "Sword",
+		BackgroundLogoMaterial = "Noir",
+		BackgroundLogoIntensity = 1.35,
+		BackgroundLogoTextTransparency = 0.74,
+		BackgroundLogoTextStrokeTransparency = 0.9,
+		BackgroundLogoRotationSpeed = 36,
+		BackgroundSwordPosition = UDim2.new(0.5, 0, 0.5, 0),
+		BackgroundSwordSize = UDim2.new(0.62, 0, 0.9, 0),
+		BackgroundSwordRotation = 0,
+		BackgroundSwordTransparency = 0.42,
 		Shadow = true,
 		ShadowTransparency = 0.42,
 		ToggleKey = "RightControl",
@@ -98,6 +107,14 @@ local Success, ErrorMessage = xpcall(function()
 		"Theme: Text Color",
 		"Theme: Muted Text Color",
 		"Theme: Slider Track",
+		"Theme: Background Shape",
+		"Theme: Background Material",
+		"Theme: Animation Speed",
+		"Theme: Pulse Intensity",
+		"Theme: See Through",
+		"Theme: Logo Color",
+		"Theme: Glow Color",
+		"Theme: Stone Color",
 		"Settings: Status",
 		"Settings: Ping",
 		"Settings: FPS",
@@ -260,10 +277,13 @@ local Success, ErrorMessage = xpcall(function()
 
 	ThemeSession:Dropdown({
 		Text = "Theme Preset",
-		Options = { "Phantom", "Nebula", "Carbon", "Ocean", "Emerald" },
-		Default = "Phantom",
+		Options = { "Noir", "Phantom", "Nebula", "Carbon", "Ocean", "Emerald" },
+		Default = "Noir",
 		Changed = function(Name)
 			LocitoUI:SetTheme(Name)
+			if Name == "Noir" then
+				Window:SetBackgroundAnimation({ Material = "Noir" })
+			end
 		end,
 	})
 
@@ -272,11 +292,11 @@ local Success, ErrorMessage = xpcall(function()
 		ApplyToTheme = true,
 		CloseOnSelect = true,
 		Presets = {
+			Color3.fromRGB(255, 255, 255),
+			Color3.fromRGB(210, 210, 220),
 			Color3.fromRGB(0, 218, 222),
 			Color3.fromRGB(255, 86, 146),
 			Color3.fromRGB(136, 92, 255),
-			Color3.fromRGB(39, 212, 121),
-			Color3.fromRGB(251, 191, 36),
 		},
 	})
 
@@ -285,10 +305,11 @@ local Success, ErrorMessage = xpcall(function()
 		ApplyToTheme = "AccentLight",
 		CloseOnSelect = true,
 		Presets = {
+			Color3.fromRGB(255, 255, 255),
+			Color3.fromRGB(185, 185, 194),
 			Color3.fromRGB(84, 255, 255),
 			Color3.fromRGB(255, 160, 205),
 			Color3.fromRGB(190, 164, 255),
-			Color3.fromRGB(135, 241, 183),
 		},
 	})
 
@@ -297,10 +318,11 @@ local Success, ErrorMessage = xpcall(function()
 		ApplyToTheme = "Background",
 		CloseOnSelect = true,
 		Presets = {
+			Color3.fromRGB(3, 3, 5),
+			Color3.fromRGB(0, 0, 0),
+			Color3.fromRGB(12, 12, 14),
+			Color3.fromRGB(245, 245, 245),
 			Color3.fromRGB(8, 10, 14),
-			Color3.fromRGB(14, 10, 18),
-			Color3.fromRGB(7, 18, 31),
-			Color3.fromRGB(8, 18, 14),
 		},
 	})
 
@@ -309,10 +331,11 @@ local Success, ErrorMessage = xpcall(function()
 		ApplyToTheme = "Surface",
 		CloseOnSelect = true,
 		Presets = {
+			Color3.fromRGB(13, 13, 16),
+			Color3.fromRGB(20, 20, 24),
+			Color3.fromRGB(245, 245, 245),
 			Color3.fromRGB(16, 19, 25),
 			Color3.fromRGB(27, 27, 42),
-			Color3.fromRGB(20, 44, 33),
-			Color3.fromRGB(16, 43, 70),
 		},
 	})
 
@@ -321,10 +344,11 @@ local Success, ErrorMessage = xpcall(function()
 		ApplyToTheme = "SurfaceLight",
 		CloseOnSelect = true,
 		Presets = {
+			Color3.fromRGB(28, 28, 32),
+			Color3.fromRGB(42, 42, 48),
+			Color3.fromRGB(255, 255, 255),
 			Color3.fromRGB(28, 32, 42),
 			Color3.fromRGB(42, 38, 58),
-			Color3.fromRGB(27, 61, 45),
-			Color3.fromRGB(21, 58, 94),
 		},
 	})
 
@@ -333,10 +357,11 @@ local Success, ErrorMessage = xpcall(function()
 		ApplyToTheme = "Border",
 		CloseOnSelect = true,
 		Presets = {
+			Color3.fromRGB(236, 236, 242),
+			Color3.fromRGB(255, 255, 255),
+			Color3.fromRGB(82, 82, 90),
+			Color3.fromRGB(0, 0, 0),
 			Color3.fromRGB(33, 38, 48),
-			Color3.fromRGB(66, 66, 88),
-			Color3.fromRGB(42, 88, 65),
-			Color3.fromRGB(42, 84, 116),
 		},
 	})
 
@@ -345,10 +370,10 @@ local Success, ErrorMessage = xpcall(function()
 		ApplyToTheme = "Text",
 		CloseOnSelect = true,
 		Presets = {
+			Color3.fromRGB(255, 255, 255),
+			Color3.fromRGB(230, 230, 236),
+			Color3.fromRGB(20, 20, 24),
 			Color3.fromRGB(240, 246, 252),
-			Color3.fromRGB(255, 246, 252),
-			Color3.fromRGB(237, 255, 246),
-			Color3.fromRGB(231, 245, 255),
 		},
 	})
 
@@ -357,10 +382,10 @@ local Success, ErrorMessage = xpcall(function()
 		ApplyToTheme = "SubText",
 		CloseOnSelect = true,
 		Presets = {
+			Color3.fromRGB(184, 184, 190),
+			Color3.fromRGB(130, 130, 140),
+			Color3.fromRGB(82, 82, 90),
 			Color3.fromRGB(143, 150, 162),
-			Color3.fromRGB(180, 160, 185),
-			Color3.fromRGB(143, 186, 162),
-			Color3.fromRGB(135, 174, 202),
 		},
 	})
 
@@ -369,11 +394,108 @@ local Success, ErrorMessage = xpcall(function()
 		ApplyToTheme = "Track",
 		CloseOnSelect = true,
 		Presets = {
+			Color3.fromRGB(48, 48, 54),
+			Color3.fromRGB(82, 82, 90),
+			Color3.fromRGB(20, 20, 24),
 			Color3.fromRGB(28, 32, 40),
-			Color3.fromRGB(56, 58, 66),
-			Color3.fromRGB(42, 88, 65),
-			Color3.fromRGB(42, 84, 116),
 		},
+	})
+
+	local AnimationStyle = ThemeTab:CreateSection("Background Animation")
+
+	AnimationStyle:Dropdown({
+		Text = "Shape",
+		Options = { "Sword", "Diamond", "Orbit", "Hex", "Cross", "Shatter" },
+		Default = "Sword",
+		Changed = function(Shape)
+			Window:SetBackgroundLogoShape(Shape)
+		end,
+	})
+
+	AnimationStyle:Dropdown({
+		Text = "Material",
+		Options = { "Noir", "Neon", "Glass", "Ghost", "Chrome", "Wood" },
+		Default = "Noir",
+		Changed = function(Material)
+			Window:SetBackgroundLogoMaterial(Material)
+		end,
+	})
+
+	AnimationStyle:Slider({
+		Text = "Animation Speed",
+		Min = 0,
+		Max = 80,
+		Default = 36,
+		Step = 2,
+		Changed = function(Value)
+			Window:SetBackgroundAnimation({ Speed = Value })
+		end,
+	})
+
+	AnimationStyle:Slider({
+		Text = "Pulse Intensity",
+		Min = 0,
+		Max = 2,
+		Default = 1.35,
+		Step = 0.05,
+		Decimals = 2,
+		Changed = function(Value)
+			Window:SetBackgroundAnimation({ Intensity = Value })
+		end,
+	})
+
+	AnimationStyle:Slider({
+		Text = "See Through",
+		Min = 0.16,
+		Max = 0.9,
+		Default = 0.42,
+		Step = 0.02,
+		Decimals = 2,
+		Changed = function(Value)
+			Window:SetBackgroundAnimation({ Transparency = Value })
+		end,
+	})
+
+	AnimationStyle:ColorPicker({
+		Text = "Logo Color",
+		CloseOnSelect = true,
+		Presets = {
+			Color3.fromRGB(255, 255, 255),
+			Color3.fromRGB(0, 255, 255),
+			Color3.fromRGB(255, 0, 128),
+			Color3.fromRGB(214, 170, 104),
+		},
+		Changed = function(Color)
+			Window:SetBackgroundAnimation({ PrimaryColor = Color })
+		end,
+	})
+
+	AnimationStyle:ColorPicker({
+		Text = "Glow Color",
+		CloseOnSelect = true,
+		Presets = {
+			Color3.fromRGB(18, 18, 22),
+			Color3.fromRGB(84, 255, 255),
+			Color3.fromRGB(255, 160, 205),
+			Color3.fromRGB(104, 70, 38),
+		},
+		Changed = function(Color)
+			Window:SetBackgroundAnimation({ SecondaryColor = Color })
+		end,
+	})
+
+	AnimationStyle:ColorPicker({
+		Text = "Stone Color",
+		CloseOnSelect = true,
+		Presets = {
+			Color3.fromRGB(8, 8, 10),
+			Color3.fromRGB(28, 28, 32),
+			Color3.fromRGB(61, 42, 27),
+			Color3.fromRGB(255, 255, 255),
+		},
+		Changed = function(Color)
+			Window:SetBackgroundAnimation({ StoneColor = Color })
+		end,
 	})
 
 	local Settings = Window:CreateTab("Settings", "S")

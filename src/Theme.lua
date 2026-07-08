@@ -88,6 +88,28 @@ Theme.Themes = {
 		AnimationSpeed = 0.22,
 	},
 
+	Noir = {
+		Background = Color3.fromRGB(3, 3, 5),
+		Secondary = Color3.fromRGB(8, 8, 10),
+		Surface = Color3.fromRGB(13, 13, 16),
+		SurfaceLight = Color3.fromRGB(28, 28, 32),
+		Accent = Color3.fromRGB(242, 242, 242),
+		AccentLight = Color3.fromRGB(255, 255, 255),
+		Text = Color3.fromRGB(255, 255, 255),
+		SubText = Color3.fromRGB(184, 184, 190),
+		Muted = Color3.fromRGB(102, 102, 110),
+		Border = Color3.fromRGB(236, 236, 242),
+		TabActive = Color3.fromRGB(32, 32, 36),
+		TabHover = Color3.fromRGB(22, 22, 26),
+		Track = Color3.fromRGB(48, 48, 54),
+		Shadow = Color3.fromRGB(0, 0, 0),
+		Success = Color3.fromRGB(220, 255, 235),
+		Warning = Color3.fromRGB(255, 232, 172),
+		Error = Color3.fromRGB(255, 154, 154),
+		CornerRadius = 10,
+		AnimationSpeed = 0.18,
+	},
+
 	Phantom = {
 		Background = Color3.fromRGB(8, 10, 14),
 		Secondary = Color3.fromRGB(10, 12, 17),

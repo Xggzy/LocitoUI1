@@ -33,6 +33,14 @@ Window:SetLogoText("LC")
 Window:SetLogoImage("rbxassetid://123456789")
 Window:SetToggleKey("RightControl")
 Window:SetBackgroundLogoVisible(true)
+Window:SetBackgroundLogoShape("Hex")
+Window:SetBackgroundLogoMaterial("Neon")
+Window:SetBackgroundAnimation({
+    Speed = 36,
+    Intensity = 1.35,
+    Transparency = 0.42,
+    PrimaryColor = Color3.fromRGB(255, 255, 255),
+})
 LocitoUI:SetAccent(Color3.fromRGB(0, 218, 222))
 LocitoUI:SetThemeColor("Background", Color3.fromRGB(8, 10, 14))
 LocitoUI:SetThemeColors({
@@ -53,6 +61,7 @@ Built-in themes:
 - `Carbon`
 - `Ocean`
 - `Emerald`
+- `Noir`
 - `Phantom`
 
 ```lua
@@ -82,7 +91,7 @@ local Window = LocitoUI.new({
     TitleAccent = "Hub",
     Version = "v2.0",
     Subtitle = false,
-    Theme = "Phantom",
+    Theme = "Noir",
     Layout = "Preview",
     LogoText = "L",
     ToggleKey = "RightControl",
@@ -98,15 +107,24 @@ local Window = LocitoUI.new({
     BackgroundLogoText = "LC",
     BackgroundLogoName = "Locito",
     BackgroundLogoSize = 190,
-    BackgroundLogoTextTransparency = 0.68,
-    BackgroundLogoTextStrokeTransparency = 0.86,
-    BackgroundLogoRotationSpeed = 28,
-    BackgroundSwordPosition = UDim2.new(0.64, 0, 0.58, 0),
-    BackgroundSwordRotation = -26,
-    BackgroundSwordTransparency = 0.56,
+    BackgroundLogoPosition = UDim2.new(0.66, 0, 0.56, 0),
+    BackgroundLogoShape = "Sword",
+    BackgroundLogoMaterial = "Noir",
+    BackgroundLogoIntensity = 1.35,
+    BackgroundLogoTextTransparency = 0.74,
+    BackgroundLogoTextStrokeTransparency = 0.9,
+    BackgroundLogoRotationSpeed = 36,
+    BackgroundSwordPosition = UDim2.new(0.5, 0, 0.5, 0),
+    BackgroundSwordRotation = 0,
+    BackgroundSwordTransparency = 0.42,
     Shadow = true,
 })
 ```
+
+Background animation options:
+
+- Shapes: `Sword`, `Diamond`, `Orbit`, `Hex`, `Cross`, `Shatter`
+- Materials: `Noir`, `Neon`, `Glass`, `Ghost`, `Chrome`, `Wood`
 
 ## Loadstring
 
