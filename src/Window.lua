@@ -235,6 +235,24 @@ function Window.new(Settings)
 			Parent = Main,
 		})
 
+		local LogoImageWatermark
+		if Settings.BackgroundLogoImage or Settings.BackgroundLogoImageId then
+			LogoImageWatermark = Utility:Create("ImageLabel", {
+				Name = "LogoImageWatermark",
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.new(0.5, 0, 0.5, 0),
+				Size = Settings.BackgroundLogoImageSize or UDim2.new(1.28, 0, 1.28, 0),
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				Image = Settings.BackgroundLogoImage or Settings.BackgroundLogoImageId,
+				ImageColor3 = Settings.BackgroundLogoImageColor or Color3.fromRGB(255, 255, 255),
+				ImageTransparency = Settings.BackgroundLogoImageTransparency or 0.48,
+				ScaleType = Settings.BackgroundLogoImageScaleType or Enum.ScaleType.Fit,
+				ZIndex = 0,
+				Parent = BackgroundLogo,
+			})
+		end
+
 		local OuterSwordLayer
 		local OuterSwordGroup
 		local OuterBlade
@@ -822,6 +840,9 @@ function Window.new(Settings)
 			LogoWatermark.TextStrokeColor3 = Material.Secondary
 			LogoWatermark.TextTransparency = math.clamp(Transparency + 0.18, 0.42, 0.9)
 			LogoWatermark.TextStrokeTransparency = math.clamp(Transparency + 0.28, 0.54, 0.95)
+			if LogoImageWatermark then
+				LogoImageWatermark.ImageTransparency = Settings.BackgroundLogoImageTransparency or math.clamp(Transparency + 0.1, 0.32, 0.88)
+			end
 			Inscription.TextColor3 = Material.Primary
 			Inscription.TextTransparency = math.clamp(Transparency + 0.02, 0.28, 0.9)
 
@@ -843,6 +864,7 @@ function Window.new(Settings)
 
 		self.BackgroundLogo = BackgroundLogo
 		self.BackgroundLogoText = LogoWatermark
+		self.BackgroundLogoImage = LogoImageWatermark
 		self.BackgroundLogoState = BackgroundLogoState
 		self.BackgroundLogoStyleApplier = ApplyBackgroundLogoStyle
 		ApplyBackgroundLogoStyle()
@@ -885,6 +907,10 @@ function Window.new(Settings)
 			GlowDisc.Size = UDim2.new(0.82 + Pulse * 0.04 * Intensity, 0, 0.82 + Pulse * 0.04 * Intensity, 0)
 			LogoWatermark.Rotation = -Rotation
 			LogoWatermark.TextTransparency = math.clamp(Transparency + 0.18 + Pulse * 0.04, 0.42, 0.9)
+			if LogoImageWatermark then
+				LogoImageWatermark.Rotation = -Rotation * 0.08
+				LogoImageWatermark.ImageTransparency = math.clamp((Settings.BackgroundLogoImageTransparency or (Transparency + 0.1)) + Pulse * 0.025, 0.28, 0.92)
+			end
 			if Shape == "shatter" then
 				Spoke.Rotation = 24 + math.sin(os.clock() * 2.8) * 8
 			else

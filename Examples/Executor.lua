@@ -25,6 +25,41 @@ local Success, ErrorMessage = xpcall(function()
 		Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 	end
 
+	local function ResolveLogoImage()
+		if typeof(writefile) ~= "function" or typeof(getcustomasset) ~= "function" then
+			return nil
+		end
+
+		local FileName = "LocitoHubLogo.png"
+		local LogoUrl = "https://raw.githubusercontent.com/Xggzy/LocitoUI1/main/Assets/locito-hub-logo.png?v=" .. CacheBust
+		local Downloaded, Body = pcall(function()
+			return game:HttpGet(LogoUrl)
+		end)
+
+		if not Downloaded or typeof(Body) ~= "string" or #Body < 100 then
+			return nil
+		end
+
+		local Wrote = pcall(function()
+			writefile(FileName, Body)
+		end)
+		if not Wrote then
+			return nil
+		end
+
+		local Loaded, Asset = pcall(function()
+			return getcustomasset(FileName)
+		end)
+
+		if Loaded and typeof(Asset) == "string" and Asset ~= "" then
+			return Asset
+		end
+
+		return nil
+	end
+
+	local LogoImage = ResolveLogoImage()
+
 	local Existing = Parent:FindFirstChild("LocitoUI")
 	if Existing then
 		Existing:Destroy()
@@ -35,7 +70,8 @@ local Success, ErrorMessage = xpcall(function()
 		TitleAccent = "Hub",
 		Version = "v2.0",
 		Subtitle = false,
-		LogoText = "L",
+		LogoText = LogoImage and "" or "L",
+		LogoImage = LogoImage,
 		Theme = "Noir",
 		Layout = "Preview",
 		Parent = Parent,
@@ -57,7 +93,10 @@ local Success, ErrorMessage = xpcall(function()
 		LogoGlow = false,
 		ControlTransparency = 1,
 		BackgroundLogo = true,
-		BackgroundLogoText = "LC",
+		BackgroundLogoText = LogoImage and "" or "LC",
+		BackgroundLogoImage = LogoImage,
+		BackgroundLogoImageSize = UDim2.new(1.46, 0, 1.46, 0),
+		BackgroundLogoImageTransparency = LogoImage and 0.42 or 1,
 		BackgroundLogoName = "Locito",
 		BackgroundLogoSize = 190,
 		BackgroundLogoPosition = UDim2.new(0.66, 0, 0.56, 0),
@@ -89,11 +128,12 @@ local Success, ErrorMessage = xpcall(function()
 	})
 
 	local FeatureIndex = {
-		"Aimbot: Silent Aim",
+		"Aimbot: Enabled",
 		"Aimbot: Team Check",
 		"Aimbot: FOV",
 		"Aimbot: Smoothness",
 		"Aimbot: Aim Part",
+		"Rage: Silent Aim",
 		"Rage: Rapid Fire",
 		"Rage: No Recoil",
 		"Rage: Auto Peek",
@@ -108,6 +148,7 @@ local Success, ErrorMessage = xpcall(function()
 		"Player: Walk Speed",
 		"Player: Jump Power",
 		"Player: Auto Sprint",
+		"Player: Fly",
 		"Player: No Clip",
 		"Player: Infinite Jump",
 		"Theme: Preset",
@@ -145,7 +186,7 @@ local Success, ErrorMessage = xpcall(function()
 	local Aim = Aimbot:CreateSection("Aimbot")
 
 	Aim:Toggle({
-		Text = "Silent Aim",
+		Text = "Aimbot",
 		Default = false,
 	})
 
@@ -177,7 +218,12 @@ local Success, ErrorMessage = xpcall(function()
 	})
 
 	local Rage = Window:CreateTab("Rage", "R")
-	local RageMain = Rage:CreateSection("Rage")
+	local RageMain = Rage:CreateSection("Rage Config")
+
+	RageMain:Toggle({
+		Text = "Silent Aim",
+		Default = false,
+	})
 
 	RageMain:Toggle({
 		Text = "Rapid Fire",
@@ -278,6 +324,11 @@ local Success, ErrorMessage = xpcall(function()
 	})
 
 	local UtilitySection = Player:CreateSection("Utility")
+
+	UtilitySection:Toggle({
+		Text = "Fly",
+		Default = false,
+	})
 
 	UtilitySection:Toggle({
 		Text = "No Clip",

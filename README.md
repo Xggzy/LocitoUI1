@@ -28,6 +28,7 @@ Built so far:
 - In-memory config module
 - Premium `Phantom` and `Noir` style presets
 - Animated background logo mark
+- Image-backed background logo support
 - Runtime theme color editing
 - Runtime background animation controls
 
@@ -35,6 +36,8 @@ Built so far:
 
 ```text
 LocitoUI
+├── Assets
+│   └── locito-hub-logo.png
 ├── src
 │   ├── init.lua
 │   ├── Window.lua
@@ -123,6 +126,8 @@ local Window = LocitoUI.new({
     LogoGlow = false,
     BackgroundLogo = true,
     BackgroundLogoText = "LC",
+    BackgroundLogoImage = "rbxassetid://123456789",
+    BackgroundLogoImageTransparency = 0.42,
     BackgroundLogoName = "Locito",
     BackgroundLogoSize = 190,
     BackgroundLogoPosition = UDim2.new(0.66, 0, 0.56, 0),
