@@ -39,4 +39,12 @@ function LocitoUI:SetAccent(Color, AccentLight)
 	return Theme:SetAccent(Color, AccentLight)
 end
 
+function LocitoUI:SetThemeColor(Key, Color)
+	return Theme:SetColor(Key, Color)
+end
+
+function LocitoUI:SetThemeColors(Values)
+	return Theme:SetColors(Values)
+end
+
 return LocitoUI

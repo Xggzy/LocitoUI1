@@ -33,6 +33,11 @@ Window:SetLogoText("LC")
 Window:SetLogoImage("rbxassetid://123456789")
 Window:SetToggleKey("RightControl")
 Window:SetBackgroundLogoVisible(true)
+LocitoUI:SetThemeColor("Background", Color3.fromRGB(8, 10, 14))
+LocitoUI:SetThemeColors({
+    Surface = Color3.fromRGB(16, 19, 25),
+    Border = Color3.fromRGB(33, 38, 48),
+})
 Window:Hide()
 Window:Show()
 Window:Toggle()
@@ -89,6 +94,7 @@ local Window = LocitoUI.new({
     RowStrokeTransparency = 0.72,
     BackgroundLogo = true,
     BackgroundLogoText = "LC",
+    BackgroundLogoName = "Locito",
     BackgroundLogoSize = 190,
     BackgroundLogoRotationSpeed = 28,
     Shadow = true,

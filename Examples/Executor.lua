@@ -48,6 +48,7 @@ local Success, ErrorMessage = xpcall(function()
 		PageSlideOffset = 8,
 		BackgroundLogo = true,
 		BackgroundLogoText = "LC",
+		BackgroundLogoName = "Locito",
 		BackgroundLogoSize = 190,
 		BackgroundLogoRotationSpeed = 28,
 		Shadow = true,
@@ -57,6 +58,38 @@ local Success, ErrorMessage = xpcall(function()
 		DisplayOrder = 999999,
 		Animate = true,
 	})
+
+	local FeatureIndex = {
+		"Aimbot: Silent Aim",
+		"Aimbot: Team Check",
+		"Aimbot: FOV",
+		"Aimbot: Smoothness",
+		"Aimbot: Aim Part",
+		"Rage: Rapid Fire",
+		"Rage: No Recoil",
+		"Rage: Auto Peek",
+		"Rage: Rage FOV",
+		"Rage: Target Mode",
+		"Visual: Box ESP",
+		"Visual: Name ESP",
+		"Visual: Health Bar",
+		"Visual: Chams",
+		"Visual: Tracer Origin",
+		"Visual: ESP Color",
+		"Player: Walk Speed",
+		"Player: Jump Power",
+		"Player: Auto Sprint",
+		"Player: No Clip",
+		"Player: Infinite Jump",
+		"Settings: Theme",
+		"Settings: Theme Color",
+		"Settings: Background Color",
+		"Settings: Panel Color",
+		"Settings: Border Color",
+		"Settings: Text Color",
+		"Settings: Menu Key",
+		"Settings: Animated Logo",
+	}
 
 	local Aimbot = Window:CreateTab("Aimbot", "A")
 	local Aim = Aimbot:CreateSection("Aimbot")
@@ -231,6 +264,54 @@ local Success, ErrorMessage = xpcall(function()
 		},
 	})
 
+	Menu:ColorPicker({
+		Text = "Background Color",
+		ApplyToTheme = "Background",
+		CloseOnSelect = true,
+		Presets = {
+			Color3.fromRGB(8, 10, 14),
+			Color3.fromRGB(14, 10, 18),
+			Color3.fromRGB(7, 18, 31),
+			Color3.fromRGB(8, 18, 14),
+		},
+	})
+
+	Menu:ColorPicker({
+		Text = "Panel Color",
+		ApplyToTheme = "Surface",
+		CloseOnSelect = true,
+		Presets = {
+			Color3.fromRGB(16, 19, 25),
+			Color3.fromRGB(27, 27, 42),
+			Color3.fromRGB(20, 44, 33),
+			Color3.fromRGB(16, 43, 70),
+		},
+	})
+
+	Menu:ColorPicker({
+		Text = "Border Color",
+		ApplyToTheme = "Border",
+		CloseOnSelect = true,
+		Presets = {
+			Color3.fromRGB(33, 38, 48),
+			Color3.fromRGB(66, 66, 88),
+			Color3.fromRGB(42, 88, 65),
+			Color3.fromRGB(42, 84, 116),
+		},
+	})
+
+	Menu:ColorPicker({
+		Text = "Text Color",
+		ApplyToTheme = "Text",
+		CloseOnSelect = true,
+		Presets = {
+			Color3.fromRGB(240, 246, 252),
+			Color3.fromRGB(255, 246, 252),
+			Color3.fromRGB(237, 255, 246),
+			Color3.fromRGB(231, 245, 255),
+		},
+	})
+
 	Menu:Keybind({
 		Text = "Menu key",
 		Default = "RightControl",
@@ -255,6 +336,36 @@ local Success, ErrorMessage = xpcall(function()
 		Style = "Accent",
 		Callback = function()
 			Window:Hide()
+		end,
+	})
+
+	local Search = Settings:CreateSection("Feature Search")
+	local SearchResults = Search:Label({
+		Text = "Type a feature name to search this script.",
+	})
+
+	Search:Textbox({
+		Placeholder = "Search tabs and features...",
+		Live = true,
+		Changed = function(Text)
+			local Query = string.lower(Text or "")
+			if Query == "" then
+				SearchResults:Set("Type a feature name to search this script.")
+				return
+			end
+
+			local Matches = {}
+			for _, Feature in ipairs(FeatureIndex) do
+				if string.find(string.lower(Feature), Query, 1, true) then
+					table.insert(Matches, Feature)
+				end
+			end
+
+			if #Matches == 0 then
+				SearchResults:Set("No matches for: " .. Text)
+			else
+				SearchResults:Set("Found: " .. table.concat(Matches, " | "))
+			end
 		end,
 	})
 end, function(Message)

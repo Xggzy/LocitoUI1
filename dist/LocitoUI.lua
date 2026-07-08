@@ -325,11 +325,58 @@ end
 function Theme:SetAccent(Color, AccentLight)
 	local Current = self:Get()
 	Current.Accent = Color
-	Current.AccentLight = AccentLight or Color
+	Current.AccentLight = AccentLight or Color:Lerp(Color3.fromRGB(255, 255, 255), 0.35)
+	Current.TabActive = Color:Lerp(Current.Background or Color3.fromRGB(0, 0, 0), 0.72)
+	Current.TabHover = Color:Lerp(Current.Background or Color3.fromRGB(0, 0, 0), 0.86)
 	self:Apply()
 
 	for _, Listener in ipairs(self.Listeners) do
 		task.spawn(Listener, Current, self.Current)
+	end
+
+	return true
+end
+
+function Theme:SetColor(Key, Color)
+	if typeof(Key) ~= "string" or typeof(Color) ~= "Color3" then
+		return false
+	end
+
+	if Key == "Accent" then
+		return self:SetAccent(Color)
+	end
+
+	local Current = self:Get()
+	Current[Key] = Color
+	self:Apply()
+
+	for _, Listener in ipairs(self.Listeners) do
+		task.spawn(Listener, Current, self.Current)
+	end
+
+	return true
+end
+
+function Theme:SetColors(Values)
+	if typeof(Values) ~= "table" then
+		return false
+	end
+
+	local Changed = false
+	for Key, Color in pairs(Values) do
+		if typeof(Key) == "string" and typeof(Color) == "Color3" then
+			self:Get()[Key] = Color
+			Changed = true
+		end
+	end
+
+	if not Changed then
+		return false
+	end
+
+	self:Apply()
+	for _, Listener in ipairs(self.Listeners) do
+		task.spawn(Listener, self:Get(), self.Current)
 	end
 
 	return true
@@ -1168,16 +1215,21 @@ function Textbox.new(Section, Options)
 	self.Changed = Options.Changed or Options.Callback or function() end
 
 	local CurrentTheme = Theme:Get()
+	local WindowSettings = Section.Tab and Section.Tab.Window and Section.Tab.Window.Settings or {}
+	local PreviewLayout = WindowSettings.Layout == "Preview" or WindowSettings.Style == "Preview" or WindowSettings.PreviewLayout == true
+	local RowTransparency = Options.BackgroundTransparency or (PreviewLayout and 1 or 0)
+	local StrokeTransparency = Options.StrokeTransparency or WindowSettings.RowStrokeTransparency or (PreviewLayout and 0.72 or 0.25)
 
 	local Row = Utility:Create("Frame", {
 		Name = "Textbox",
-		Size = UDim2.new(1, 0, 0, 42),
+		Size = Options.Size or UDim2.new(1, 0, 0, Options.Height or (PreviewLayout and 45 or 42)),
 		BackgroundColor3 = CurrentTheme.Secondary,
+		BackgroundTransparency = RowTransparency,
 		BorderSizePixel = 0,
 		Parent = Section.Body,
 	})
-	Utility:Round(Row, 9)
-	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, 0.25)
+	Utility:Round(Row, Options.Radius or (PreviewLayout and 0 or 9))
+	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, StrokeTransparency)
 	Theme:Register(Row, "BackgroundColor3", "Secondary")
 	Theme:Register(Stroke, "Color", "Border")
 
@@ -1191,7 +1243,7 @@ function Textbox.new(Section, Options)
 		PlaceholderText = Options.Placeholder or Options.Text or "Type here...",
 		PlaceholderColor3 = CurrentTheme.Muted,
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextSize = Options.TextSize or (PreviewLayout and 13 or 14),
 		ClearTextOnFocus = Options.ClearTextOnFocus == true,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Row,
@@ -1202,12 +1254,21 @@ function Textbox.new(Section, Options)
 	Box.Focused:Connect(function()
 		Animation:Play(Stroke, { Transparency = 0 }, { Time = 0.12 })
 		Animation:Play(Stroke, { Color = Theme:Get().Accent }, { Time = 0.12 })
+		Animation:Play(Row, { BackgroundTransparency = PreviewLayout and 0.82 or RowTransparency }, { Time = 0.12 })
 	end)
+
+	if Options.Live == true or Options.LiveUpdate == true then
+		Box:GetPropertyChangedSignal("Text"):Connect(function()
+			self.Value = Box.Text
+			Utility:SafeCall(self.Changed, self.Value, false)
+		end)
+	end
 
 	Box.FocusLost:Connect(function(EnterPressed)
 		self.Value = Box.Text
-		Animation:Play(Stroke, { Transparency = 0.25 }, { Time = 0.12 })
+		Animation:Play(Stroke, { Transparency = StrokeTransparency }, { Time = 0.12 })
 		Animation:Play(Stroke, { Color = Theme:Get().Border }, { Time = 0.12 })
+		Animation:Play(Row, { BackgroundTransparency = RowTransparency }, { Time = 0.12 })
 		Utility:SafeCall(self.Changed, self.Value, EnterPressed)
 	end)
 
@@ -1660,7 +1721,11 @@ function ColorPicker.new(Section, Options)
 		Swatch.MouseButton1Click:Connect(function()
 			self:Set(Color)
 			if Options.ApplyToTheme then
-				Theme:SetAccent(Color)
+				local ThemeKey = Options.ThemeKey or Options.ColorKey or Options.ApplyToTheme
+				if ThemeKey == true then
+					ThemeKey = "Accent"
+				end
+				Theme:SetColor(ThemeKey, Color)
 			end
 			if Options.CloseOnSelect then
 				self.Open = false
@@ -2423,6 +2488,122 @@ function Window.new(Settings)
 		local InnerDiamondStroke = Utility:Stroke(InnerDiamond, CurrentTheme.AccentLight, 1, Settings.BackgroundLogoRingTransparency or 0.72)
 		Theme:Register(InnerDiamondStroke, "Color", "AccentLight")
 
+		local SwordGroup = Utility:Create("Frame", {
+			Name = "SwordStoneMark",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(0.72, 0, 0.86, 0),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = BackgroundLogo,
+		})
+
+		local Blade = Utility:Create("Frame", {
+			Name = "Blade",
+			AnchorPoint = Vector2.new(0.5, 0),
+			Position = UDim2.new(0.5, 0, 0.06, 0),
+			Size = UDim2.new(0, 10, 0.52, 0),
+			BackgroundColor3 = CurrentTheme.AccentLight,
+			BackgroundTransparency = 0.58,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Utility:Round(Blade, 5)
+		Theme:Register(Blade, "BackgroundColor3", "AccentLight")
+
+		local Tip = Utility:Create("Frame", {
+			Name = "BladeTip",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.07, 0),
+			Size = UDim2.new(0, 22, 0, 22),
+			BackgroundColor3 = CurrentTheme.AccentLight,
+			BackgroundTransparency = 0.58,
+			BorderSizePixel = 0,
+			Rotation = 45,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Utility:Round(Tip, 4)
+		Theme:Register(Tip, "BackgroundColor3", "AccentLight")
+
+		local Guard = Utility:Create("Frame", {
+			Name = "Guard",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.58, 0),
+			Size = UDim2.new(0.5, 0, 0, 9),
+			BackgroundColor3 = CurrentTheme.Accent,
+			BackgroundTransparency = 0.52,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Utility:Round(Guard, 8)
+		Theme:Register(Guard, "BackgroundColor3", "Accent")
+
+		local Grip = Utility:Create("Frame", {
+			Name = "Grip",
+			AnchorPoint = Vector2.new(0.5, 0),
+			Position = UDim2.new(0.5, 0, 0.58, 0),
+			Size = UDim2.new(0, 16, 0.2, 0),
+			BackgroundColor3 = CurrentTheme.SurfaceLight,
+			BackgroundTransparency = 0.3,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Utility:Round(Grip, 6)
+		Theme:Register(Grip, "BackgroundColor3", "SurfaceLight")
+
+		local Pommel = Utility:Create("Frame", {
+			Name = "Pommel",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.78, 0),
+			Size = UDim2.new(0, 24, 0, 10),
+			BackgroundColor3 = CurrentTheme.Accent,
+			BackgroundTransparency = 0.52,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Utility:Round(Pommel, 8)
+		Theme:Register(Pommel, "BackgroundColor3", "Accent")
+
+		local Stone = Utility:Create("Frame", {
+			Name = "Stone",
+			AnchorPoint = Vector2.new(0.5, 1),
+			Position = UDim2.new(0.5, 0, 1, 0),
+			Size = UDim2.new(0.62, 0, 0.2, 0),
+			BackgroundColor3 = CurrentTheme.SurfaceLight,
+			BackgroundTransparency = 0.38,
+			BorderSizePixel = 0,
+			Rotation = -2,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Utility:Round(Stone, 14)
+		Theme:Register(Stone, "BackgroundColor3", "SurfaceLight")
+
+		local StoneStroke = Utility:Stroke(Stone, CurrentTheme.Accent, 1, 0.62)
+		Theme:Register(StoneStroke, "Color", "Accent")
+
+		local Inscription = Utility:Create("TextLabel", {
+			Name = "Inscription",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.91, 0),
+			Size = UDim2.new(0.68, 0, 0, 18),
+			BackgroundTransparency = 1,
+			Font = Enum.Font.GothamBlack,
+			Text = Settings.BackgroundLogoName or Settings.Name or "Locito",
+			TextColor3 = CurrentTheme.Accent,
+			TextTransparency = 0.58,
+			TextScaled = true,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Theme:Register(Inscription, "TextColor3", "Accent")
+
 		local Spoke = Utility:Create("Frame", {
 			Name = "Spoke",
 			AnchorPoint = Vector2.new(0.5, 0.5),
@@ -2468,6 +2649,9 @@ function Window.new(Settings)
 			InnerRing.Rotation = -Rotation * 1.35
 			Diamond.Rotation = 45 - Rotation * 0.55
 			InnerDiamond.Rotation = 45 + Rotation * 0.7
+			SwordGroup.Rotation = math.sin(os.clock() * 1.6) * 3
+			Blade.BackgroundTransparency = math.clamp(0.58 + Pulse * 0.08, 0.44, 0.72)
+			Tip.BackgroundTransparency = Blade.BackgroundTransparency
 			GlowDisc.BackgroundTransparency = math.clamp((Settings.BackgroundLogoGlowTransparency or 0.92) + Pulse * 0.035, 0.84, 0.97)
 			GlowDisc.Size = UDim2.new(0.82 + Pulse * 0.03, 0, 0.82 + Pulse * 0.03, 0)
 			LogoWatermark.Rotation = -Rotation
@@ -3006,6 +3190,14 @@ end
 
 function LocitoUI:SetAccent(Color, AccentLight)
 	return Theme:SetAccent(Color, AccentLight)
+end
+
+function LocitoUI:SetThemeColor(Key, Color)
+	return Theme:SetColor(Key, Color)
+end
+
+function LocitoUI:SetThemeColors(Values)
+	return Theme:SetColors(Values)
 end
 
 return LocitoUI

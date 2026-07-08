@@ -169,11 +169,58 @@ end
 function Theme:SetAccent(Color, AccentLight)
 	local Current = self:Get()
 	Current.Accent = Color
-	Current.AccentLight = AccentLight or Color
+	Current.AccentLight = AccentLight or Color:Lerp(Color3.fromRGB(255, 255, 255), 0.35)
+	Current.TabActive = Color:Lerp(Current.Background or Color3.fromRGB(0, 0, 0), 0.72)
+	Current.TabHover = Color:Lerp(Current.Background or Color3.fromRGB(0, 0, 0), 0.86)
 	self:Apply()
 
 	for _, Listener in ipairs(self.Listeners) do
 		task.spawn(Listener, Current, self.Current)
+	end
+
+	return true
+end
+
+function Theme:SetColor(Key, Color)
+	if typeof(Key) ~= "string" or typeof(Color) ~= "Color3" then
+		return false
+	end
+
+	if Key == "Accent" then
+		return self:SetAccent(Color)
+	end
+
+	local Current = self:Get()
+	Current[Key] = Color
+	self:Apply()
+
+	for _, Listener in ipairs(self.Listeners) do
+		task.spawn(Listener, Current, self.Current)
+	end
+
+	return true
+end
+
+function Theme:SetColors(Values)
+	if typeof(Values) ~= "table" then
+		return false
+	end
+
+	local Changed = false
+	for Key, Color in pairs(Values) do
+		if typeof(Key) == "string" and typeof(Color) == "Color3" then
+			self:Get()[Key] = Color
+			Changed = true
+		end
+	end
+
+	if not Changed then
+		return false
+	end
+
+	self:Apply()
+	for _, Listener in ipairs(self.Listeners) do
+		task.spawn(Listener, self:Get(), self.Current)
 	end
 
 	return true

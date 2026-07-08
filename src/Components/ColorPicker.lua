@@ -113,7 +113,11 @@ function ColorPicker.new(Section, Options)
 		Swatch.MouseButton1Click:Connect(function()
 			self:Set(Color)
 			if Options.ApplyToTheme then
-				Theme:SetAccent(Color)
+				local ThemeKey = Options.ThemeKey or Options.ColorKey or Options.ApplyToTheme
+				if ThemeKey == true then
+					ThemeKey = "Accent"
+				end
+				Theme:SetColor(ThemeKey, Color)
 			end
 			if Options.CloseOnSelect then
 				self.Open = false

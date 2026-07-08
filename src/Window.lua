@@ -292,6 +292,122 @@ function Window.new(Settings)
 		local InnerDiamondStroke = Utility:Stroke(InnerDiamond, CurrentTheme.AccentLight, 1, Settings.BackgroundLogoRingTransparency or 0.72)
 		Theme:Register(InnerDiamondStroke, "Color", "AccentLight")
 
+		local SwordGroup = Utility:Create("Frame", {
+			Name = "SwordStoneMark",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(0.72, 0, 0.86, 0),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = BackgroundLogo,
+		})
+
+		local Blade = Utility:Create("Frame", {
+			Name = "Blade",
+			AnchorPoint = Vector2.new(0.5, 0),
+			Position = UDim2.new(0.5, 0, 0.06, 0),
+			Size = UDim2.new(0, 10, 0.52, 0),
+			BackgroundColor3 = CurrentTheme.AccentLight,
+			BackgroundTransparency = 0.58,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Utility:Round(Blade, 5)
+		Theme:Register(Blade, "BackgroundColor3", "AccentLight")
+
+		local Tip = Utility:Create("Frame", {
+			Name = "BladeTip",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.07, 0),
+			Size = UDim2.new(0, 22, 0, 22),
+			BackgroundColor3 = CurrentTheme.AccentLight,
+			BackgroundTransparency = 0.58,
+			BorderSizePixel = 0,
+			Rotation = 45,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Utility:Round(Tip, 4)
+		Theme:Register(Tip, "BackgroundColor3", "AccentLight")
+
+		local Guard = Utility:Create("Frame", {
+			Name = "Guard",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.58, 0),
+			Size = UDim2.new(0.5, 0, 0, 9),
+			BackgroundColor3 = CurrentTheme.Accent,
+			BackgroundTransparency = 0.52,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Utility:Round(Guard, 8)
+		Theme:Register(Guard, "BackgroundColor3", "Accent")
+
+		local Grip = Utility:Create("Frame", {
+			Name = "Grip",
+			AnchorPoint = Vector2.new(0.5, 0),
+			Position = UDim2.new(0.5, 0, 0.58, 0),
+			Size = UDim2.new(0, 16, 0.2, 0),
+			BackgroundColor3 = CurrentTheme.SurfaceLight,
+			BackgroundTransparency = 0.3,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Utility:Round(Grip, 6)
+		Theme:Register(Grip, "BackgroundColor3", "SurfaceLight")
+
+		local Pommel = Utility:Create("Frame", {
+			Name = "Pommel",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.78, 0),
+			Size = UDim2.new(0, 24, 0, 10),
+			BackgroundColor3 = CurrentTheme.Accent,
+			BackgroundTransparency = 0.52,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Utility:Round(Pommel, 8)
+		Theme:Register(Pommel, "BackgroundColor3", "Accent")
+
+		local Stone = Utility:Create("Frame", {
+			Name = "Stone",
+			AnchorPoint = Vector2.new(0.5, 1),
+			Position = UDim2.new(0.5, 0, 1, 0),
+			Size = UDim2.new(0.62, 0, 0.2, 0),
+			BackgroundColor3 = CurrentTheme.SurfaceLight,
+			BackgroundTransparency = 0.38,
+			BorderSizePixel = 0,
+			Rotation = -2,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Utility:Round(Stone, 14)
+		Theme:Register(Stone, "BackgroundColor3", "SurfaceLight")
+
+		local StoneStroke = Utility:Stroke(Stone, CurrentTheme.Accent, 1, 0.62)
+		Theme:Register(StoneStroke, "Color", "Accent")
+
+		local Inscription = Utility:Create("TextLabel", {
+			Name = "Inscription",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.91, 0),
+			Size = UDim2.new(0.68, 0, 0, 18),
+			BackgroundTransparency = 1,
+			Font = Enum.Font.GothamBlack,
+			Text = Settings.BackgroundLogoName or Settings.Name or "Locito",
+			TextColor3 = CurrentTheme.Accent,
+			TextTransparency = 0.58,
+			TextScaled = true,
+			ZIndex = 0,
+			Parent = SwordGroup,
+		})
+		Theme:Register(Inscription, "TextColor3", "Accent")
+
 		local Spoke = Utility:Create("Frame", {
 			Name = "Spoke",
 			AnchorPoint = Vector2.new(0.5, 0.5),
@@ -337,6 +453,9 @@ function Window.new(Settings)
 			InnerRing.Rotation = -Rotation * 1.35
 			Diamond.Rotation = 45 - Rotation * 0.55
 			InnerDiamond.Rotation = 45 + Rotation * 0.7
+			SwordGroup.Rotation = math.sin(os.clock() * 1.6) * 3
+			Blade.BackgroundTransparency = math.clamp(0.58 + Pulse * 0.08, 0.44, 0.72)
+			Tip.BackgroundTransparency = Blade.BackgroundTransparency
 			GlowDisc.BackgroundTransparency = math.clamp((Settings.BackgroundLogoGlowTransparency or 0.92) + Pulse * 0.035, 0.84, 0.97)
 			GlowDisc.Size = UDim2.new(0.82 + Pulse * 0.03, 0, 0.82 + Pulse * 0.03, 0)
 			LogoWatermark.Rotation = -Rotation

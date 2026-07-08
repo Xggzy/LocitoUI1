@@ -15,16 +15,21 @@ function Textbox.new(Section, Options)
 	self.Changed = Options.Changed or Options.Callback or function() end
 
 	local CurrentTheme = Theme:Get()
+	local WindowSettings = Section.Tab and Section.Tab.Window and Section.Tab.Window.Settings or {}
+	local PreviewLayout = WindowSettings.Layout == "Preview" or WindowSettings.Style == "Preview" or WindowSettings.PreviewLayout == true
+	local RowTransparency = Options.BackgroundTransparency or (PreviewLayout and 1 or 0)
+	local StrokeTransparency = Options.StrokeTransparency or WindowSettings.RowStrokeTransparency or (PreviewLayout and 0.72 or 0.25)
 
 	local Row = Utility:Create("Frame", {
 		Name = "Textbox",
-		Size = UDim2.new(1, 0, 0, 42),
+		Size = Options.Size or UDim2.new(1, 0, 0, Options.Height or (PreviewLayout and 45 or 42)),
 		BackgroundColor3 = CurrentTheme.Secondary,
+		BackgroundTransparency = RowTransparency,
 		BorderSizePixel = 0,
 		Parent = Section.Body,
 	})
-	Utility:Round(Row, 9)
-	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, 0.25)
+	Utility:Round(Row, Options.Radius or (PreviewLayout and 0 or 9))
+	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, StrokeTransparency)
 	Theme:Register(Row, "BackgroundColor3", "Secondary")
 	Theme:Register(Stroke, "Color", "Border")
 
@@ -38,7 +43,7 @@ function Textbox.new(Section, Options)
 		PlaceholderText = Options.Placeholder or Options.Text or "Type here...",
 		PlaceholderColor3 = CurrentTheme.Muted,
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextSize = Options.TextSize or (PreviewLayout and 13 or 14),
 		ClearTextOnFocus = Options.ClearTextOnFocus == true,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Row,
@@ -49,12 +54,21 @@ function Textbox.new(Section, Options)
 	Box.Focused:Connect(function()
 		Animation:Play(Stroke, { Transparency = 0 }, { Time = 0.12 })
 		Animation:Play(Stroke, { Color = Theme:Get().Accent }, { Time = 0.12 })
+		Animation:Play(Row, { BackgroundTransparency = PreviewLayout and 0.82 or RowTransparency }, { Time = 0.12 })
 	end)
+
+	if Options.Live == true or Options.LiveUpdate == true then
+		Box:GetPropertyChangedSignal("Text"):Connect(function()
+			self.Value = Box.Text
+			Utility:SafeCall(self.Changed, self.Value, false)
+		end)
+	end
 
 	Box.FocusLost:Connect(function(EnterPressed)
 		self.Value = Box.Text
-		Animation:Play(Stroke, { Transparency = 0.25 }, { Time = 0.12 })
+		Animation:Play(Stroke, { Transparency = StrokeTransparency }, { Time = 0.12 })
 		Animation:Play(Stroke, { Color = Theme:Get().Border }, { Time = 0.12 })
+		Animation:Play(Row, { BackgroundTransparency = RowTransparency }, { Time = 0.12 })
 		Utility:SafeCall(self.Changed, self.Value, EnterPressed)
 	end)
 
