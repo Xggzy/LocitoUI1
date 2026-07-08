@@ -58,6 +58,73 @@ local Success, ErrorMessage = xpcall(function()
 		Animate = true,
 	})
 
+	local Aimbot = Window:CreateTab("Aimbot", "A")
+	local Aim = Aimbot:CreateSection("Aimbot")
+
+	Aim:Toggle({
+		Text = "Silent Aim",
+		Default = false,
+	})
+
+	Aim:Toggle({
+		Text = "Team Check",
+		Default = true,
+	})
+
+	Aim:Slider({
+		Text = "FOV",
+		Min = 0,
+		Max = 240,
+		Default = 120,
+		Step = 5,
+	})
+
+	Aim:Slider({
+		Text = "Smoothness",
+		Min = 1,
+		Max = 20,
+		Default = 8,
+		Step = 1,
+	})
+
+	Aim:Dropdown({
+		Text = "Aim Part",
+		Options = { "Head", "Torso", "HumanoidRootPart" },
+		Default = "Head",
+	})
+
+	local Rage = Window:CreateTab("Rage", "R")
+	local RageMain = Rage:CreateSection("Rage")
+
+	RageMain:Toggle({
+		Text = "Rapid Fire",
+		Default = false,
+	})
+
+	RageMain:Toggle({
+		Text = "No Recoil",
+		Default = true,
+	})
+
+	RageMain:Toggle({
+		Text = "Auto Peek",
+		Default = false,
+	})
+
+	RageMain:Slider({
+		Text = "Rage FOV",
+		Min = 0,
+		Max = 360,
+		Default = 180,
+		Step = 10,
+	})
+
+	RageMain:Dropdown({
+		Text = "Target Mode",
+		Options = { "Closest", "Lowest Health", "Crosshair" },
+		Default = "Closest",
+	})
+
 	local Visual = Window:CreateTab("Visual", "V")
 	local Esp = Visual:CreateSection("ESP")
 
@@ -94,7 +161,6 @@ local Success, ErrorMessage = xpcall(function()
 
 	VisualStyle:ColorPicker({
 		Text = "ESP Color",
-		ApplyToTheme = true,
 		CloseOnSelect = true,
 		Presets = {
 			Color3.fromRGB(0, 218, 222),
@@ -102,77 +168,6 @@ local Success, ErrorMessage = xpcall(function()
 			Color3.fromRGB(39, 212, 121),
 			Color3.fromRGB(251, 191, 36),
 		},
-	})
-
-	local Aimbot = Window:CreateTab("Aimbot", "A")
-	local Aim = Aimbot:CreateSection("Aimbot")
-
-	Aim:Toggle({
-		Text = "Silent Aim",
-		Default = false,
-	})
-
-	Aim:Toggle({
-		Text = "Team Check",
-		Default = true,
-	})
-
-	Aim:Slider({
-		Text = "FOV",
-		Min = 0,
-		Max = 240,
-		Default = 120,
-		Step = 5,
-	})
-
-	Aim:Slider({
-		Text = "Smoothness",
-		Min = 1,
-		Max = 20,
-		Default = 8,
-		Step = 1,
-	})
-
-	Aim:Dropdown({
-		Text = "Aim Part",
-		Options = { "Head", "Torso", "HumanoidRootPart" },
-		Default = "Head",
-	})
-
-	local Settings = Window:CreateTab("Settings", "S")
-	local Menu = Settings:CreateSection("Menu")
-
-	Menu:Dropdown({
-		Text = "Theme",
-		Options = { "Phantom", "Nebula", "Carbon", "Ocean", "Emerald" },
-		Default = "Phantom",
-		Changed = function(Name)
-			LocitoUI:SetTheme(Name)
-		end,
-	})
-
-	Menu:Keybind({
-		Text = "Menu key",
-		Default = "RightControl",
-		Changed = function(Key, IsNewBind)
-			if IsNewBind then
-				Window:SetToggleKey(Key)
-				Window:Notify("Menu key", "Toggle key set to " .. Key, 2, "Success")
-			end
-		end,
-	})
-
-	Menu:Toggle({
-		Text = "Animated Logo",
-		Default = true,
-	})
-
-	Menu:Button({
-		Text = "Hide Menu",
-		Style = "Accent",
-		Callback = function()
-			Window:Hide()
-		end,
 	})
 
 	local Player = Window:CreateTab("Player", "P")
@@ -211,36 +206,56 @@ local Success, ErrorMessage = xpcall(function()
 		Default = false,
 	})
 
-	local Rage = Window:CreateTab("Rage", "R")
-	local RageMain = Rage:CreateSection("Rage")
+	local Settings = Window:CreateTab("Settings", "S")
+	local Menu = Settings:CreateSection("Menu")
 
-	RageMain:Toggle({
-		Text = "Rapid Fire",
-		Default = false,
+	Menu:Dropdown({
+		Text = "Theme",
+		Options = { "Phantom", "Nebula", "Carbon", "Ocean", "Emerald" },
+		Default = "Phantom",
+		Changed = function(Name)
+			LocitoUI:SetTheme(Name)
+		end,
 	})
 
-	RageMain:Toggle({
-		Text = "No Recoil",
+	Menu:ColorPicker({
+		Text = "Theme Color",
+		ApplyToTheme = true,
+		CloseOnSelect = true,
+		Presets = {
+			Color3.fromRGB(0, 218, 222),
+			Color3.fromRGB(255, 86, 146),
+			Color3.fromRGB(136, 92, 255),
+			Color3.fromRGB(39, 212, 121),
+			Color3.fromRGB(251, 191, 36),
+		},
+	})
+
+	Menu:Keybind({
+		Text = "Menu key",
+		Default = "RightControl",
+		Changed = function(Key, IsNewBind)
+			if IsNewBind then
+				Window:SetToggleKey(Key)
+				Window:Notify("Menu key", "Toggle key set to " .. Key, 2, "Success")
+			end
+		end,
+	})
+
+	Menu:Toggle({
+		Text = "Animated Logo",
 		Default = true,
+		Changed = function(Value)
+			Window:SetBackgroundLogoVisible(Value)
+		end,
 	})
 
-	RageMain:Toggle({
-		Text = "Auto Peek",
-		Default = false,
-	})
-
-	RageMain:Slider({
-		Text = "Rage FOV",
-		Min = 0,
-		Max = 360,
-		Default = 180,
-		Step = 10,
-	})
-
-	RageMain:Dropdown({
-		Text = "Target Mode",
-		Options = { "Closest", "Lowest Health", "Crosshair" },
-		Default = "Closest",
+	Menu:Button({
+		Text = "Hide Menu",
+		Style = "Accent",
+		Callback = function()
+			Window:Hide()
+		end,
 	})
 end, function(Message)
 	if debug and debug.traceback then

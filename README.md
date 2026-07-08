@@ -129,6 +129,7 @@ You can also change these at runtime:
 Window:SetLogoText("LC")
 Window:SetLogoImage("rbxassetid://123456789")
 Window:SetToggleKey("RightControl")
+Window:SetBackgroundLogoVisible(true)
 Window:Hide()
 Window:Show()
 Window:Toggle()

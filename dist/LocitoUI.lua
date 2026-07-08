@@ -2351,6 +2351,20 @@ function Window.new(Settings)
 			Parent = Main,
 		})
 
+		local GlowDisc = Utility:Create("Frame", {
+			Name = "GlowDisc",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(0.82, 0, 0.82, 0),
+			BackgroundColor3 = CurrentTheme.Accent,
+			BackgroundTransparency = Settings.BackgroundLogoGlowTransparency or 0.92,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = BackgroundLogo,
+		})
+		Utility:Round(GlowDisc, BackgroundLogoSize)
+		Theme:Register(GlowDisc, "BackgroundColor3", "Accent")
+
 		local OuterRing = Utility:Create("Frame", {
 			Name = "OuterRing",
 			AnchorPoint = Vector2.new(0.5, 0.5),
@@ -2378,6 +2392,36 @@ function Window.new(Settings)
 		Utility:Round(InnerRing, BackgroundLogoSize)
 		local InnerStroke = Utility:Stroke(InnerRing, CurrentTheme.AccentLight, 1, Settings.BackgroundLogoRingTransparency or 0.72)
 		Theme:Register(InnerStroke, "Color", "AccentLight")
+
+		local Diamond = Utility:Create("Frame", {
+			Name = "DiamondMark",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(0.46, 0, 0.46, 0),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Rotation = 45,
+			ZIndex = 0,
+			Parent = BackgroundLogo,
+		})
+		Utility:Round(Diamond, 10)
+		local DiamondStroke = Utility:Stroke(Diamond, CurrentTheme.Accent, 2, Settings.BackgroundLogoRingTransparency or 0.72)
+		Theme:Register(DiamondStroke, "Color", "Accent")
+
+		local InnerDiamond = Utility:Create("Frame", {
+			Name = "InnerDiamondMark",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(0.28, 0, 0.28, 0),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Rotation = 45,
+			ZIndex = 0,
+			Parent = BackgroundLogo,
+		})
+		Utility:Round(InnerDiamond, 7)
+		local InnerDiamondStroke = Utility:Stroke(InnerDiamond, CurrentTheme.AccentLight, 1, Settings.BackgroundLogoRingTransparency or 0.72)
+		Theme:Register(InnerDiamondStroke, "Color", "AccentLight")
 
 		local Spoke = Utility:Create("Frame", {
 			Name = "Spoke",
@@ -2419,10 +2463,15 @@ function Window.new(Settings)
 			end
 
 			local Rotation = (BackgroundLogo.Rotation + DeltaTime * BackgroundLogoSpeed) % 360
+			local Pulse = math.sin(os.clock() * 2.4)
 			BackgroundLogo.Rotation = Rotation
 			InnerRing.Rotation = -Rotation * 1.35
+			Diamond.Rotation = 45 - Rotation * 0.55
+			InnerDiamond.Rotation = 45 + Rotation * 0.7
+			GlowDisc.BackgroundTransparency = math.clamp((Settings.BackgroundLogoGlowTransparency or 0.92) + Pulse * 0.035, 0.84, 0.97)
+			GlowDisc.Size = UDim2.new(0.82 + Pulse * 0.03, 0, 0.82 + Pulse * 0.03, 0)
 			LogoWatermark.Rotation = -Rotation
-			LogoWatermark.TextTransparency = math.clamp((Settings.BackgroundLogoTextTransparency or 0.82) + math.sin(os.clock() * 2) * 0.04, 0.68, 0.92)
+			LogoWatermark.TextTransparency = math.clamp((Settings.BackgroundLogoTextTransparency or 0.82) + Pulse * 0.04, 0.68, 0.92)
 		end))
 	end
 
@@ -2875,6 +2924,12 @@ function Window:SetLogoImage(Image, Color)
 	self.LogoImage.Image = Image
 	if Color then
 		self.LogoImage.ImageColor3 = Color
+	end
+end
+
+function Window:SetBackgroundLogoVisible(Visible)
+	if self.BackgroundLogo then
+		self.BackgroundLogo.Visible = Visible == true
 	end
 end
 
