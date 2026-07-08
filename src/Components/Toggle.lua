@@ -16,18 +16,24 @@ function Toggle.new(Section, Options)
 	self.Changed = Options.Changed or Options.Callback or function() end
 
 	local CurrentTheme = Theme:Get()
+	local WindowSettings = Section.Tab and Section.Tab.Window and Section.Tab.Window.Settings or {}
+	local PreviewLayout = WindowSettings.Layout == "Preview" or WindowSettings.Style == "Preview" or WindowSettings.PreviewLayout == true
+	local RowTransparency = Options.BackgroundTransparency or (PreviewLayout and 1 or 0)
+	local StrokeTransparency = Options.StrokeTransparency or WindowSettings.RowStrokeTransparency or (PreviewLayout and 0.72 or 0.25)
+	local TrackOffColor = CurrentTheme.Track or CurrentTheme.Border
 
 	local Row = Utility:Create("TextButton", {
 		Name = "Toggle",
-		Size = UDim2.new(1, 0, 0, 40),
+		Size = UDim2.new(1, 0, 0, Options.Height or (PreviewLayout and 45 or 40)),
 		BackgroundColor3 = CurrentTheme.Secondary,
+		BackgroundTransparency = RowTransparency,
 		BorderSizePixel = 0,
 		Text = "",
 		AutoButtonColor = false,
 		Parent = Section.Body,
 	})
-	Utility:Round(Row, 9)
-	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, 0.25)
+	Utility:Round(Row, Options.Radius or (PreviewLayout and 0 or 9))
+	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, StrokeTransparency)
 	Theme:Register(Row, "BackgroundColor3", "Secondary")
 	Theme:Register(Stroke, "Color", "Border")
 
@@ -39,7 +45,7 @@ function Toggle.new(Section, Options)
 		Font = Enum.Font.GothamMedium,
 		Text = Options.Text or Options.Name or "Toggle",
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextSize = Options.TextSize or (PreviewLayout and 13 or 14),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Row,
 	})
@@ -49,8 +55,8 @@ function Toggle.new(Section, Options)
 		Name = "Track",
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -12, 0.5, 0),
-		Size = UDim2.new(0, 44, 0, 22),
-		BackgroundColor3 = self.Value and CurrentTheme.Accent or CurrentTheme.Border,
+		Size = UDim2.new(0, PreviewLayout and 36 or 44, 0, PreviewLayout and 20 or 22),
+		BackgroundColor3 = self.Value and CurrentTheme.Accent or TrackOffColor,
 		BorderSizePixel = 0,
 		Parent = Row,
 	})
@@ -59,8 +65,8 @@ function Toggle.new(Section, Options)
 	local Knob = Utility:Create("Frame", {
 		Name = "Knob",
 		AnchorPoint = Vector2.new(0, 0.5),
-		Position = self.Value and UDim2.new(1, -20, 0.5, 0) or UDim2.new(0, 2, 0.5, 0),
-		Size = UDim2.new(0, 18, 0, 18),
+		Position = self.Value and UDim2.new(1, PreviewLayout and -18 or -20, 0.5, 0) or UDim2.new(0, 2, 0.5, 0),
+		Size = UDim2.new(0, PreviewLayout and 16 or 18, 0, PreviewLayout and 16 or 18),
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 		BorderSizePixel = 0,
 		Parent = Track,
@@ -78,11 +84,11 @@ function Toggle.new(Section, Options)
 
 		local T = Theme:Get()
 		Animation:Play(Track, {
-			BackgroundColor3 = self.Value and T.Accent or T.Border,
+			BackgroundColor3 = self.Value and T.Accent or (T.Track or T.Border),
 		}, { Time = 0.14 })
 
 		Animation:Play(Knob, {
-			Position = self.Value and UDim2.new(1, -20, 0.5, 0) or UDim2.new(0, 2, 0.5, 0),
+			Position = self.Value and UDim2.new(1, PreviewLayout and -18 or -20, 0.5, 0) or UDim2.new(0, 2, 0.5, 0),
 		}, { Time = 0.14 })
 
 		if not SkipCallback then
@@ -100,11 +106,17 @@ function Toggle.new(Section, Options)
 	end)
 
 	Row.MouseEnter:Connect(function()
-		Animation:Play(Row, { BackgroundColor3 = Theme:Get().SurfaceLight }, { Time = 0.12 })
+		Animation:Play(Row, {
+			BackgroundColor3 = Theme:Get().SurfaceLight,
+			BackgroundTransparency = PreviewLayout and 0.82 or RowTransparency,
+		}, { Time = 0.12 })
 	end)
 
 	Row.MouseLeave:Connect(function()
-		Animation:Play(Row, { BackgroundColor3 = Theme:Get().Secondary }, { Time = 0.12 })
+		Animation:Play(Row, {
+			BackgroundColor3 = Theme:Get().Secondary,
+			BackgroundTransparency = RowTransparency,
+		}, { Time = 0.12 })
 	end)
 
 	return self

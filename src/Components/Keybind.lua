@@ -19,16 +19,21 @@ function Keybind.new(Section, Options)
 	self.Connections = {}
 
 	local CurrentTheme = Theme:Get()
+	local WindowSettings = Section.Tab and Section.Tab.Window and Section.Tab.Window.Settings or {}
+	local PreviewLayout = WindowSettings.Layout == "Preview" or WindowSettings.Style == "Preview" or WindowSettings.PreviewLayout == true
+	local RowTransparency = Options.BackgroundTransparency or (PreviewLayout and 1 or 0)
+	local StrokeTransparency = Options.StrokeTransparency or WindowSettings.RowStrokeTransparency or (PreviewLayout and 0.72 or 0.25)
 
 	local Row = Utility:Create("Frame", {
 		Name = "Keybind",
-		Size = UDim2.new(1, 0, 0, 40),
+		Size = UDim2.new(1, 0, 0, Options.Height or (PreviewLayout and 45 or 40)),
 		BackgroundColor3 = CurrentTheme.Secondary,
+		BackgroundTransparency = RowTransparency,
 		BorderSizePixel = 0,
 		Parent = Section.Body,
 	})
-	Utility:Round(Row, 9)
-	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, 0.25)
+	Utility:Round(Row, Options.Radius or (PreviewLayout and 0 or 9))
+	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, StrokeTransparency)
 	Theme:Register(Row, "BackgroundColor3", "Secondary")
 	Theme:Register(Stroke, "Color", "Border")
 
@@ -39,7 +44,7 @@ function Keybind.new(Section, Options)
 		Font = Enum.Font.GothamMedium,
 		Text = Options.Text or Options.Name or "Keybind",
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextSize = Options.TextSize or (PreviewLayout and 13 or 14),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Row,
 	})
@@ -49,24 +54,25 @@ function Keybind.new(Section, Options)
 		Name = "BindButton",
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -10, 0.5, 0),
-		Size = UDim2.new(0, 78, 0, 26),
-		BackgroundColor3 = CurrentTheme.Surface,
+		Size = UDim2.new(0, PreviewLayout and 92 or 78, 0, PreviewLayout and 28 or 26),
+		BackgroundColor3 = CurrentTheme.SurfaceLight,
 		BorderSizePixel = 0,
-		Font = Enum.Font.Gotham,
+		Font = PreviewLayout and Enum.Font.Code or Enum.Font.Gotham,
 		Text = self.Key,
-		TextColor3 = CurrentTheme.SubText,
+		TextColor3 = PreviewLayout and CurrentTheme.Accent or CurrentTheme.SubText,
 		TextSize = 12,
 		AutoButtonColor = false,
 		Parent = Row,
 	})
 	Utility:Round(Button, 7)
-	Theme:Register(Button, "BackgroundColor3", "Surface")
-	Theme:Register(Button, "TextColor3", "SubText")
+	Theme:Register(Button, "BackgroundColor3", "SurfaceLight")
+	Theme:Register(Button, "TextColor3", PreviewLayout and "Accent" or "SubText")
 
 	table.insert(self.Connections, Button.MouseButton1Click:Connect(function()
 		self.Listening = true
 		Button.Text = "..."
 		Animation:Play(Button, { BackgroundColor3 = Theme:Get().Accent }, { Time = 0.12 })
+		Animation:Play(Button, { TextColor3 = Theme:Get().Background }, { Time = 0.12 })
 	end))
 
 	table.insert(self.Connections, UserInputService.InputBegan:Connect(function(Input, Processed)
@@ -77,7 +83,8 @@ function Keybind.new(Section, Options)
 			self.Key = Input.KeyCode.Name
 			self.Listening = false
 			Button.Text = self.Key
-			Animation:Play(Button, { BackgroundColor3 = Theme:Get().Surface }, { Time = 0.12 })
+			Animation:Play(Button, { BackgroundColor3 = Theme:Get().SurfaceLight }, { Time = 0.12 })
+			Animation:Play(Button, { TextColor3 = PreviewLayout and Theme:Get().Accent or Theme:Get().SubText }, { Time = 0.12 })
 			Utility:SafeCall(self.Callback, self.Key, true)
 		elseif Input.KeyCode.Name == self.Key then
 			Utility:SafeCall(self.Callback, self.Key, false)

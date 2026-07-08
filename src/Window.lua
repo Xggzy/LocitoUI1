@@ -39,6 +39,64 @@ local function ResolveKeyCode(Key)
 	return nil
 end
 
+local function ColorToHex(Color)
+	return string.format(
+		"#%02X%02X%02X",
+		math.floor(Color.R * 255 + 0.5),
+		math.floor(Color.G * 255 + 0.5),
+		math.floor(Color.B * 255 + 0.5)
+	)
+end
+
+local function EscapeRichText(Text)
+	local Escaped = tostring(Text)
+	Escaped = Escaped:gsub("&", "&amp;")
+	Escaped = Escaped:gsub("<", "&lt;")
+	Escaped = Escaped:gsub(">", "&gt;")
+	return Escaped
+end
+
+local function BuildTitleText(Settings, ThemeValues, TitleText)
+	if typeof(Settings.TitleRichText) == "string" then
+		return Settings.TitleRichText, true
+	end
+
+	local AccentWord = Settings.TitleAccent or Settings.AccentTitle or Settings.HighlightTitle
+	local Version = Settings.Version or Settings.ScriptVersion
+	if not AccentWord and not Version and Settings.TitleRichText ~= true then
+		return TitleText, false
+	end
+
+	local Rendered = EscapeRichText(TitleText)
+	local UsesRichText = Settings.TitleRichText == true
+
+	if AccentWord then
+		local Word = EscapeRichText(AccentWord)
+		local StartIndex, EndIndex = Rendered:find(Word, 1, true)
+		if StartIndex then
+			local AccentColor = ColorToHex(Settings.TitleAccentColor or ThemeValues.Accent)
+			Rendered = Rendered:sub(1, StartIndex - 1)
+				.. "<font color=\"" .. AccentColor .. "\">"
+				.. Rendered:sub(StartIndex, EndIndex)
+				.. "</font>"
+				.. Rendered:sub(EndIndex + 1)
+			UsesRichText = true
+		end
+	end
+
+	if Version then
+		Rendered = Rendered
+			.. " <font size=\"10\" color=\""
+			.. ColorToHex(Settings.VersionColor or ThemeValues.Muted)
+			.. "\">"
+			.. EscapeRichText(Version)
+			.. "</font>"
+		UsesRichText = true
+	end
+
+	return Rendered, UsesRichText
+end
+
 function Window.new(Settings)
 	Settings = Settings or {}
 
@@ -60,22 +118,31 @@ function Window.new(Settings)
 	local CurrentTheme = Theme:Get()
 	local Player = Players.LocalPlayer
 	local ParentGui = Settings.Parent or (Player and Player:WaitForChild("PlayerGui"))
-	local WindowSize = Settings.Size or UDim2.new(0, Settings.Width or 680, 0, Settings.Height or 450)
-	local TopBarHeight = Settings.TopBarHeight or Settings.TopbarHeight or 56
-	local OuterPadding = Settings.Padding or 14
-	local Gap = Settings.Gap or 14
+	local PreviewLayout = Settings.Layout == "Preview" or Settings.Style == "Preview" or Settings.PreviewLayout == true
+	local WindowSize = Settings.Size or UDim2.new(0, Settings.Width or (PreviewLayout and 672 or 680), 0, Settings.Height or (PreviewLayout and 430 or 450))
+	local TopBarHeight = Settings.TopBarHeight or Settings.TopbarHeight or (PreviewLayout and 54 or 56)
+	local OuterPadding = Settings.Padding or (PreviewLayout and 12 or 14)
+	local TopBarPadding = Settings.TopBarPadding or (PreviewLayout and 18 or OuterPadding)
+	local Gap = Settings.Gap or (PreviewLayout and 14 or 14)
 	local ContentGap = Settings.ContentGap or 10
-	local SidebarWidth = Settings.SidebarWidth or 160
+	local SidebarWidth = Settings.SidebarWidth or (PreviewLayout and 160 or 160)
 	local HasSidebar = Settings.Sidebar ~= false
-	local ContentX = HasSidebar and (OuterPadding + SidebarWidth + Gap) or OuterPadding
 	local ContentTop = TopBarHeight + ContentGap
-	local ContentWidthOffset = HasSidebar and -(OuterPadding * 2 + SidebarWidth + Gap) or -(OuterPadding * 2)
-	local ContentHeightOffset = -(ContentTop + OuterPadding)
+	local ContentX = HasSidebar and ((PreviewLayout and SidebarWidth or OuterPadding + SidebarWidth) + Gap) or OuterPadding
+	local ContentRightPadding = Settings.ContentRightPadding or (PreviewLayout and 12 or OuterPadding)
+	local ContentBottomPadding = Settings.ContentBottomPadding or (PreviewLayout and 12 or OuterPadding)
+	local ContentWidthOffset = -(ContentX + ContentRightPadding)
+	local ContentHeightOffset = -(ContentTop + ContentBottomPadding)
+	local SidebarX = Settings.SidebarX or (PreviewLayout and 0 or OuterPadding)
+	local SidebarY = Settings.SidebarY or (PreviewLayout and TopBarHeight or ContentTop)
+	local SidebarHeightOffset = Settings.SidebarHeightOffset or (PreviewLayout and -TopBarHeight or ContentHeightOffset)
 	local ShowControls = Settings.Controls ~= false
 	local ShowClose = ShowControls and Settings.CloseButton ~= false
 	local ShowMinimize = ShowControls and Settings.MinimizeButton ~= false
 	local ControlReserve = ShowControls and 90 or 16
-	local TitleX = Settings.Logo == false and OuterPadding or (OuterPadding + 42)
+	local LogoSize = Settings.LogoSize or (PreviewLayout and 28 or 32)
+	local LogoRadius = Settings.LogoRadius or (PreviewLayout and 9 or 10)
+	local TitleX = Settings.Logo == false and TopBarPadding or (TopBarPadding + LogoSize + 12)
 	local MainAnchor = Settings.AnchorPoint or Vector2.new(0.5, 0.5)
 	local MainPosition = Settings.Position or UDim2.new(0.5, 0, 0.5, 0)
 	local Radius = Settings.Radius or CurrentTheme.CornerRadius
@@ -148,33 +215,50 @@ function Window.new(Settings)
 	self.TopBar = TopBar
 
 	if Settings.AccentLine ~= false then
+		local AccentLineThemeKey = Settings.AccentLineThemeKey or (PreviewLayout and "Border" or "Accent")
 		local AccentLine = Utility:Create("Frame", {
 			Name = "AccentLine",
 			AnchorPoint = Vector2.new(0, 1),
 			Position = UDim2.new(0, 0, 1, 0),
 			Size = UDim2.new(1, 0, 0, Settings.AccentLineHeight or 1),
-			BackgroundColor3 = CurrentTheme.Accent,
-			BackgroundTransparency = Settings.AccentLineTransparency or 0.35,
+			BackgroundColor3 = CurrentTheme[AccentLineThemeKey] or CurrentTheme.Accent,
+			BackgroundTransparency = Settings.AccentLineTransparency or (PreviewLayout and 0.35 or 0.35),
 			BorderSizePixel = 0,
 			Parent = TopBar,
 		})
-		Theme:Register(AccentLine, "BackgroundColor3", "Accent")
+		Theme:Register(AccentLine, "BackgroundColor3", AccentLineThemeKey)
 		self.AccentLine = AccentLine
+	end
+
+	local LogoY = math.floor((TopBarHeight - LogoSize) / 2)
+	if Settings.Logo ~= false and (Settings.LogoGlow == true or (PreviewLayout and Settings.LogoGlow ~= false)) then
+		local LogoGlow = Utility:Create("Frame", {
+			Name = "LogoGlow",
+			BackgroundColor3 = CurrentTheme.Accent,
+			BackgroundTransparency = Settings.LogoGlowTransparency or 0.84,
+			Position = UDim2.new(0, TopBarPadding - 4, 0, LogoY - 4),
+			Size = UDim2.new(0, LogoSize + 8, 0, LogoSize + 8),
+			BorderSizePixel = 0,
+			Parent = TopBar,
+		})
+		Utility:Round(LogoGlow, LogoRadius + 6)
+		Theme:Register(LogoGlow, "BackgroundColor3", "Accent")
+		self.LogoGlow = LogoGlow
 	end
 
 	local Logo = Utility:Create("TextLabel", {
 		Name = "Logo",
 		BackgroundColor3 = CurrentTheme.Surface,
-		Position = UDim2.new(0, OuterPadding, 0, math.floor((TopBarHeight - 32) / 2)),
-		Size = UDim2.new(0, 32, 0, 32),
+		Position = UDim2.new(0, TopBarPadding, 0, LogoY),
+		Size = UDim2.new(0, LogoSize, 0, LogoSize),
 		Visible = Settings.Logo ~= false,
 		Font = Settings.LogoFont or Enum.Font.GothamBold,
 		Text = (Settings.LogoImage or Settings.LogoId) and "" or (Settings.LogoText or "L"),
 		TextColor3 = CurrentTheme.AccentLight,
-		TextSize = Settings.LogoTextSize or 18,
+		TextSize = Settings.LogoTextSize or (PreviewLayout and 14 or 18),
 		Parent = TopBar,
 	})
-	Utility:Round(Logo, Settings.LogoRadius or 10)
+	Utility:Round(Logo, LogoRadius)
 	Theme:Register(Logo, "BackgroundColor3", "Surface")
 	Theme:Register(Logo, "TextColor3", "AccentLight")
 	self.Logo = Logo
@@ -193,16 +277,22 @@ function Window.new(Settings)
 		self.LogoImage = LogoImage
 	end
 
+	local RawTitleText = Settings.Name or Settings.Title or "Locito Hub"
+	local TitleText, TitleRichText = BuildTitleText(Settings, CurrentTheme, RawTitleText)
+	local HasSubtitle = Settings.Subtitle ~= false and Settings.Subtitle ~= nil
+	local TitleY = Settings.TitleY or (HasSubtitle and 9 or math.floor((TopBarHeight - 22) / 2))
+
 	local Title = Utility:Create("TextLabel", {
 		Name = "Title",
 		BackgroundTransparency = 1,
-		Position = UDim2.new(0, TitleX, 0, 9),
+		Position = UDim2.new(0, TitleX, 0, TitleY),
 		Size = UDim2.new(1, -TitleX - ControlReserve, 0, 22),
 		Font = Settings.TitleFont or Enum.Font.GothamBold,
-		Text = Settings.Name or Settings.Title or "Locito Hub",
+		Text = TitleText,
 		TextColor3 = CurrentTheme.Text,
-		TextSize = Settings.TitleSize or 18,
+		TextSize = Settings.TitleSize or (PreviewLayout and 14 or 18),
 		TextXAlignment = Enum.TextXAlignment.Left,
+		RichText = TitleRichText,
 		Parent = TopBar,
 	})
 	Theme:Register(Title, "TextColor3", "Text")
@@ -213,7 +303,7 @@ function Window.new(Settings)
 		BackgroundTransparency = 1,
 		Position = UDim2.new(0, TitleX, 0, 30),
 		Size = UDim2.new(1, -TitleX - ControlReserve, 0, 16),
-		Visible = Settings.Subtitle ~= false,
+		Visible = HasSubtitle,
 		Font = Settings.SubtitleFont or Enum.Font.Gotham,
 		Text = Settings.Subtitle or "Original Roblox UI Library",
 		TextColor3 = CurrentTheme.SubText,
@@ -227,12 +317,13 @@ function Window.new(Settings)
 	local Close = Utility:Create("TextButton", {
 		Name = "Close",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -OuterPadding, 0, math.floor((TopBarHeight - 28) / 2)),
-		Size = UDim2.new(0, 28, 0, 28),
+		Position = UDim2.new(1, -TopBarPadding, 0, math.floor((TopBarHeight - (Settings.ControlSize or (PreviewLayout and 24 or 28))) / 2)),
+		Size = UDim2.new(0, Settings.ControlSize or (PreviewLayout and 24 or 28), 0, Settings.ControlSize or (PreviewLayout and 24 or 28)),
 		Visible = ShowClose,
 		BackgroundColor3 = CurrentTheme.Surface,
+		BackgroundTransparency = Settings.ControlTransparency or (PreviewLayout and 1 or 0),
 		Font = Enum.Font.GothamBold,
-		Text = "X",
+		Text = Settings.CloseText or (PreviewLayout and "x" or "X"),
 		TextColor3 = CurrentTheme.SubText,
 		TextSize = 16,
 		AutoButtonColor = false,
@@ -245,10 +336,11 @@ function Window.new(Settings)
 	local Minimize = Utility:Create("TextButton", {
 		Name = "Minimize",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, ShowClose and -(OuterPadding + 34) or -OuterPadding, 0, math.floor((TopBarHeight - 28) / 2)),
-		Size = UDim2.new(0, 28, 0, 28),
+		Position = UDim2.new(1, ShowClose and -(TopBarPadding + 34) or -TopBarPadding, 0, math.floor((TopBarHeight - (Settings.ControlSize or (PreviewLayout and 24 or 28))) / 2)),
+		Size = UDim2.new(0, Settings.ControlSize or (PreviewLayout and 24 or 28), 0, Settings.ControlSize or (PreviewLayout and 24 or 28)),
 		Visible = ShowMinimize,
 		BackgroundColor3 = CurrentTheme.Surface,
+		BackgroundTransparency = Settings.ControlTransparency or (PreviewLayout and 1 or 0),
 		Font = Enum.Font.GothamBold,
 		Text = "-",
 		TextColor3 = CurrentTheme.SubText,
@@ -262,23 +354,38 @@ function Window.new(Settings)
 
 	local Sidebar = Utility:Create("Frame", {
 		Name = "Sidebar",
-		Position = UDim2.new(0, OuterPadding, 0, ContentTop),
-		Size = UDim2.new(0, SidebarWidth, 1, ContentHeightOffset),
+		Position = UDim2.new(0, SidebarX, 0, SidebarY),
+		Size = UDim2.new(0, SidebarWidth, 1, SidebarHeightOffset),
 		Visible = HasSidebar,
 		BackgroundColor3 = CurrentTheme.Secondary,
 		BorderSizePixel = 0,
 		Parent = Main,
 	})
-	Utility:Round(Sidebar, Settings.PanelRadius or Radius)
+	Utility:Round(Sidebar, Settings.SidebarRadius or (PreviewLayout and 0 or Settings.PanelRadius or Radius))
 	Theme:Register(Sidebar, "BackgroundColor3", "Secondary")
 	self.Sidebar = Sidebar
 
+	if HasSidebar and (Settings.SidebarDivider == true or (PreviewLayout and Settings.SidebarDivider ~= false)) then
+		local SidebarDivider = Utility:Create("Frame", {
+			Name = "SidebarDivider",
+			Position = UDim2.new(0, SidebarWidth, 0, TopBarHeight),
+			Size = UDim2.new(0, 1, 1, -TopBarHeight),
+			BackgroundColor3 = CurrentTheme.Border,
+			BackgroundTransparency = Settings.SidebarDividerTransparency or 0.45,
+			BorderSizePixel = 0,
+			Parent = Main,
+		})
+		Theme:Register(SidebarDivider, "BackgroundColor3", "Border")
+		self.SidebarDivider = SidebarDivider
+	end
+
+	local SidebarListInset = Settings.SidebarListInset or (PreviewLayout and 8 or 8)
 	local SidebarList = Utility:Create("ScrollingFrame", {
 		Name = "TabList",
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Position = UDim2.new(0, 8, 0, 8),
-		Size = UDim2.new(1, -16, 1, -16),
+		Position = UDim2.new(0, SidebarListInset, 0, SidebarListInset),
+		Size = UDim2.new(1, -(SidebarListInset * 2), 1, -(SidebarListInset * 2)),
 		ScrollBarThickness = 2,
 		ScrollBarImageColor3 = CurrentTheme.Accent,
 		CanvasSize = UDim2.new(0, 0, 0, 0),
@@ -294,11 +401,12 @@ function Window.new(Settings)
 		Position = UDim2.new(0, ContentX, 0, ContentTop),
 		Size = UDim2.new(1, ContentWidthOffset, 1, ContentHeightOffset),
 		BackgroundColor3 = CurrentTheme.Secondary,
+		BackgroundTransparency = Settings.ContentTransparency or (PreviewLayout and 1 or 0),
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 		Parent = Main,
 	})
-	Utility:Round(Content, Settings.PanelRadius or Radius)
+	Utility:Round(Content, Settings.ContentRadius or Settings.PanelRadius or (PreviewLayout and 0 or Radius))
 	Theme:Register(Content, "BackgroundColor3", "Secondary")
 	self.Content = Content
 

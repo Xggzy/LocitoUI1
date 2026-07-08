@@ -175,6 +175,7 @@ Theme.Themes = {
 		SubText = Color3.fromRGB(164, 164, 180),
 		Muted = Color3.fromRGB(90, 90, 108),
 		Border = Color3.fromRGB(66, 66, 88),
+		Track = Color3.fromRGB(66, 66, 88),
 		Shadow = Color3.fromRGB(0, 0, 0),
 		Success = Color3.fromRGB(72, 210, 118),
 		Warning = Color3.fromRGB(255, 186, 73),
@@ -194,6 +195,7 @@ Theme.Themes = {
 		SubText = Color3.fromRGB(160, 160, 166),
 		Muted = Color3.fromRGB(86, 86, 92),
 		Border = Color3.fromRGB(56, 58, 66),
+		Track = Color3.fromRGB(56, 58, 66),
 		Shadow = Color3.fromRGB(0, 0, 0),
 		Success = Color3.fromRGB(72, 210, 118),
 		Warning = Color3.fromRGB(255, 186, 73),
@@ -213,6 +215,7 @@ Theme.Themes = {
 		SubText = Color3.fromRGB(135, 174, 202),
 		Muted = Color3.fromRGB(72, 105, 130),
 		Border = Color3.fromRGB(42, 84, 116),
+		Track = Color3.fromRGB(42, 84, 116),
 		Shadow = Color3.fromRGB(0, 0, 0),
 		Success = Color3.fromRGB(72, 210, 118),
 		Warning = Color3.fromRGB(255, 186, 73),
@@ -232,6 +235,7 @@ Theme.Themes = {
 		SubText = Color3.fromRGB(143, 186, 162),
 		Muted = Color3.fromRGB(76, 110, 91),
 		Border = Color3.fromRGB(42, 88, 65),
+		Track = Color3.fromRGB(42, 88, 65),
 		Shadow = Color3.fromRGB(0, 0, 0),
 		Success = Color3.fromRGB(72, 210, 118),
 		Warning = Color3.fromRGB(255, 186, 73),
@@ -241,16 +245,19 @@ Theme.Themes = {
 	},
 
 	Phantom = {
-		Background = Color3.fromRGB(7, 8, 12),
-		Secondary = Color3.fromRGB(12, 14, 20),
-		Surface = Color3.fromRGB(17, 20, 29),
-		SurfaceLight = Color3.fromRGB(25, 30, 42),
-		Accent = Color3.fromRGB(96, 165, 250),
-		AccentLight = Color3.fromRGB(147, 197, 253),
-		Text = Color3.fromRGB(241, 245, 249),
-		SubText = Color3.fromRGB(148, 163, 184),
-		Muted = Color3.fromRGB(71, 85, 105),
-		Border = Color3.fromRGB(31, 41, 55),
+		Background = Color3.fromRGB(8, 10, 14),
+		Secondary = Color3.fromRGB(10, 12, 17),
+		Surface = Color3.fromRGB(16, 19, 25),
+		SurfaceLight = Color3.fromRGB(28, 32, 42),
+		Accent = Color3.fromRGB(0, 218, 222),
+		AccentLight = Color3.fromRGB(84, 255, 255),
+		Text = Color3.fromRGB(240, 246, 252),
+		SubText = Color3.fromRGB(143, 150, 162),
+		Muted = Color3.fromRGB(91, 98, 111),
+		Border = Color3.fromRGB(33, 38, 48),
+		TabActive = Color3.fromRGB(8, 48, 52),
+		TabHover = Color3.fromRGB(15, 28, 34),
+		Track = Color3.fromRGB(28, 32, 40),
 		Shadow = Color3.fromRGB(0, 0, 0),
 		Success = Color3.fromRGB(52, 211, 153),
 		Warning = Color3.fromRGB(251, 191, 36),
@@ -567,6 +574,8 @@ function Button.new(Section, Options)
 	local self = setmetatable({}, Button)
 
 	local CurrentTheme = Theme:Get()
+	local WindowSettings = Section.Tab and Section.Tab.Window and Section.Tab.Window.Settings or {}
+	local PreviewLayout = WindowSettings.Layout == "Preview" or WindowSettings.Style == "Preview" or WindowSettings.PreviewLayout == true
 	self.Callback = Options.Callback or function() end
 	self.Enabled = Options.Enabled ~= false
 	local Style = Options.Style or (Options.Accent and "Accent") or "Secondary"
@@ -575,18 +584,18 @@ function Button.new(Section, Options)
 
 	local Object = Utility:Create("TextButton", {
 		Name = "Button",
-		Size = Options.Size or UDim2.new(1, 0, 0, Options.Height or 38),
+		Size = Options.Size or UDim2.new(1, 0, 0, Options.Height or (PreviewLayout and 40 or 38)),
 		BackgroundColor3 = Options.BackgroundColor or CurrentTheme[BackgroundKey],
 		BorderSizePixel = 0,
 		Font = Options.Font or Enum.Font.GothamMedium,
 		Text = Options.Text or Options.Name or "Button",
 		TextColor3 = Options.TextColor or CurrentTheme[TextKey],
-		TextSize = Options.TextSize or 14,
+		TextSize = Options.TextSize or (PreviewLayout and 13 or 14),
 		TextTransparency = self.Enabled and 0 or 0.45,
 		AutoButtonColor = false,
 		Parent = Section.Body,
 	})
-	Utility:Round(Object, Options.Radius or 9)
+	Utility:Round(Object, Options.Radius or (PreviewLayout and 8 or 9))
 	local Stroke = Utility:Stroke(Object, CurrentTheme.Border, 1, 0.25)
 	if not Options.BackgroundColor then
 		Theme:Register(Object, "BackgroundColor3", BackgroundKey)
@@ -598,12 +607,18 @@ function Button.new(Section, Options)
 
 	Object.MouseEnter:Connect(function()
 		if not self.Enabled then return end
-		Animation:Play(Object, { BackgroundColor3 = Theme:Get().SurfaceLight }, { Time = 0.12 })
+		Animation:Play(Object, {
+			BackgroundColor3 = Style == "Accent" and Theme:Get().AccentLight or Theme:Get().SurfaceLight,
+			TextSize = (Options.TextSize or (PreviewLayout and 13 or 14)) + 1,
+		}, { Time = 0.12 })
 	end)
 
 	Object.MouseLeave:Connect(function()
 		if not self.Enabled then return end
-		Animation:Play(Object, { BackgroundColor3 = Options.BackgroundColor or Theme:Get()[BackgroundKey] }, { Time = 0.12 })
+		Animation:Play(Object, {
+			BackgroundColor3 = Options.BackgroundColor or Theme:Get()[BackgroundKey],
+			TextSize = Options.TextSize or (PreviewLayout and 13 or 14),
+		}, { Time = 0.12 })
 	end)
 
 	Object.MouseButton1Click:Connect(function()
@@ -649,18 +664,24 @@ function Toggle.new(Section, Options)
 	self.Changed = Options.Changed or Options.Callback or function() end
 
 	local CurrentTheme = Theme:Get()
+	local WindowSettings = Section.Tab and Section.Tab.Window and Section.Tab.Window.Settings or {}
+	local PreviewLayout = WindowSettings.Layout == "Preview" or WindowSettings.Style == "Preview" or WindowSettings.PreviewLayout == true
+	local RowTransparency = Options.BackgroundTransparency or (PreviewLayout and 1 or 0)
+	local StrokeTransparency = Options.StrokeTransparency or WindowSettings.RowStrokeTransparency or (PreviewLayout and 0.72 or 0.25)
+	local TrackOffColor = CurrentTheme.Track or CurrentTheme.Border
 
 	local Row = Utility:Create("TextButton", {
 		Name = "Toggle",
-		Size = UDim2.new(1, 0, 0, 40),
+		Size = UDim2.new(1, 0, 0, Options.Height or (PreviewLayout and 45 or 40)),
 		BackgroundColor3 = CurrentTheme.Secondary,
+		BackgroundTransparency = RowTransparency,
 		BorderSizePixel = 0,
 		Text = "",
 		AutoButtonColor = false,
 		Parent = Section.Body,
 	})
-	Utility:Round(Row, 9)
-	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, 0.25)
+	Utility:Round(Row, Options.Radius or (PreviewLayout and 0 or 9))
+	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, StrokeTransparency)
 	Theme:Register(Row, "BackgroundColor3", "Secondary")
 	Theme:Register(Stroke, "Color", "Border")
 
@@ -672,7 +693,7 @@ function Toggle.new(Section, Options)
 		Font = Enum.Font.GothamMedium,
 		Text = Options.Text or Options.Name or "Toggle",
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextSize = Options.TextSize or (PreviewLayout and 13 or 14),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Row,
 	})
@@ -682,8 +703,8 @@ function Toggle.new(Section, Options)
 		Name = "Track",
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -12, 0.5, 0),
-		Size = UDim2.new(0, 44, 0, 22),
-		BackgroundColor3 = self.Value and CurrentTheme.Accent or CurrentTheme.Border,
+		Size = UDim2.new(0, PreviewLayout and 36 or 44, 0, PreviewLayout and 20 or 22),
+		BackgroundColor3 = self.Value and CurrentTheme.Accent or TrackOffColor,
 		BorderSizePixel = 0,
 		Parent = Row,
 	})
@@ -692,8 +713,8 @@ function Toggle.new(Section, Options)
 	local Knob = Utility:Create("Frame", {
 		Name = "Knob",
 		AnchorPoint = Vector2.new(0, 0.5),
-		Position = self.Value and UDim2.new(1, -20, 0.5, 0) or UDim2.new(0, 2, 0.5, 0),
-		Size = UDim2.new(0, 18, 0, 18),
+		Position = self.Value and UDim2.new(1, PreviewLayout and -18 or -20, 0.5, 0) or UDim2.new(0, 2, 0.5, 0),
+		Size = UDim2.new(0, PreviewLayout and 16 or 18, 0, PreviewLayout and 16 or 18),
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 		BorderSizePixel = 0,
 		Parent = Track,
@@ -711,11 +732,11 @@ function Toggle.new(Section, Options)
 
 		local T = Theme:Get()
 		Animation:Play(Track, {
-			BackgroundColor3 = self.Value and T.Accent or T.Border,
+			BackgroundColor3 = self.Value and T.Accent or (T.Track or T.Border),
 		}, { Time = 0.14 })
 
 		Animation:Play(Knob, {
-			Position = self.Value and UDim2.new(1, -20, 0.5, 0) or UDim2.new(0, 2, 0.5, 0),
+			Position = self.Value and UDim2.new(1, PreviewLayout and -18 or -20, 0.5, 0) or UDim2.new(0, 2, 0.5, 0),
 		}, { Time = 0.14 })
 
 		if not SkipCallback then
@@ -733,11 +754,17 @@ function Toggle.new(Section, Options)
 	end)
 
 	Row.MouseEnter:Connect(function()
-		Animation:Play(Row, { BackgroundColor3 = Theme:Get().SurfaceLight }, { Time = 0.12 })
+		Animation:Play(Row, {
+			BackgroundColor3 = Theme:Get().SurfaceLight,
+			BackgroundTransparency = PreviewLayout and 0.82 or RowTransparency,
+		}, { Time = 0.12 })
 	end)
 
 	Row.MouseLeave:Connect(function()
-		Animation:Play(Row, { BackgroundColor3 = Theme:Get().Secondary }, { Time = 0.12 })
+		Animation:Play(Row, {
+			BackgroundColor3 = Theme:Get().Secondary,
+			BackgroundTransparency = RowTransparency,
+		}, { Time = 0.12 })
 	end)
 
 	return self
@@ -800,16 +827,21 @@ function Slider.new(Section, Options)
 	self.Connections = {}
 
 	local CurrentTheme = Theme:Get()
+	local WindowSettings = Section.Tab and Section.Tab.Window and Section.Tab.Window.Settings or {}
+	local PreviewLayout = WindowSettings.Layout == "Preview" or WindowSettings.Style == "Preview" or WindowSettings.PreviewLayout == true
+	local RowTransparency = Options.BackgroundTransparency or (PreviewLayout and 1 or 0)
+	local StrokeTransparency = Options.StrokeTransparency or WindowSettings.RowStrokeTransparency or (PreviewLayout and 0.72 or 0.25)
 
 	local Row = Utility:Create("Frame", {
 		Name = "Slider",
-		Size = Options.Size or UDim2.new(1, 0, 0, Options.Height or 56),
+		Size = Options.Size or UDim2.new(1, 0, 0, Options.Height or (PreviewLayout and 58 or 56)),
 		BackgroundColor3 = CurrentTheme.Secondary,
+		BackgroundTransparency = RowTransparency,
 		BorderSizePixel = 0,
 		Parent = Section.Body,
 	})
-	Utility:Round(Row, 9)
-	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, 0.25)
+	Utility:Round(Row, Options.Radius or (PreviewLayout and 0 or 9))
+	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, StrokeTransparency)
 	Theme:Register(Row, "BackgroundColor3", "Secondary")
 	Theme:Register(Stroke, "Color", "Border")
 
@@ -820,36 +852,42 @@ function Slider.new(Section, Options)
 		Font = Enum.Font.GothamMedium,
 		Text = Options.Text or Options.Name or "Slider",
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextSize = Options.TextSize or (PreviewLayout and 13 or 14),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Row,
 	})
 	Theme:Register(Label, "TextColor3", "Text")
 
 	local ValueLabel = Utility:Create("TextLabel", {
-		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -12, 0, 6),
-		Size = UDim2.new(0.35, 0, 0, 20),
-		Font = Enum.Font.Gotham,
+		Size = PreviewLayout and UDim2.new(0, 44, 0, 20) or UDim2.new(0.35, 0, 0, 20),
+		BackgroundColor3 = CurrentTheme.SurfaceLight,
+		BackgroundTransparency = PreviewLayout and 0 or 1,
+		BorderSizePixel = 0,
+		Font = PreviewLayout and Enum.Font.Code or Enum.Font.Gotham,
 		Text = tostring(self.Value),
-		TextColor3 = CurrentTheme.SubText,
-		TextSize = 13,
-		TextXAlignment = Enum.TextXAlignment.Right,
+		TextColor3 = PreviewLayout and CurrentTheme.Accent or CurrentTheme.SubText,
+		TextSize = PreviewLayout and 12 or 13,
+		TextXAlignment = Enum.TextXAlignment.Center,
 		Parent = Row,
 	})
-	Theme:Register(ValueLabel, "TextColor3", "SubText")
+	if PreviewLayout then
+		Utility:Round(ValueLabel, 5)
+	end
+	Theme:Register(ValueLabel, "BackgroundColor3", "SurfaceLight")
+	Theme:Register(ValueLabel, "TextColor3", PreviewLayout and "Accent" or "SubText")
 
 	local Track = Utility:Create("Frame", {
 		Name = "Track",
 		Position = UDim2.new(0, 12, 0, 36),
-		Size = UDim2.new(1, -24, 0, Options.TrackHeight or 8),
-		BackgroundColor3 = CurrentTheme.Border,
+		Size = UDim2.new(1, -24, 0, Options.TrackHeight or (PreviewLayout and 5 or 8)),
+		BackgroundColor3 = CurrentTheme.Track or CurrentTheme.Border,
 		BorderSizePixel = 0,
 		Parent = Row,
 	})
 	Utility:Round(Track, 99)
-	Theme:Register(Track, "BackgroundColor3", "Border")
+	Theme:Register(Track, "BackgroundColor3", "Track")
 
 	local Fill = Utility:Create("Frame", {
 		Name = "Fill",
@@ -864,12 +902,15 @@ function Slider.new(Section, Options)
 	local Knob = Utility:Create("Frame", {
 		Name = "Knob",
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Size = UDim2.new(0, 16, 0, 16),
-		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+		Size = UDim2.new(0, PreviewLayout and 12 or 16, 0, PreviewLayout and 12 or 16),
+		BackgroundColor3 = PreviewLayout and CurrentTheme.Accent or Color3.fromRGB(255, 255, 255),
 		BorderSizePixel = 0,
 		Parent = Track,
 	})
 	Utility:Round(Knob, 99)
+	if PreviewLayout then
+		Theme:Register(Knob, "BackgroundColor3", "Accent")
+	end
 
 	self.Row = Row
 	self.Track = Track
@@ -901,8 +942,8 @@ function Slider.new(Section, Options)
 		self.Value = RoundValue(self.Min + self.Range * Ratio)
 		local VisualRatio = self.Range == 0 and 0 or (self.Value - self.Min) / self.Range
 		ValueLabel.Text = FormatValue(self.Value)
-		Fill.Size = UDim2.new(VisualRatio, 0, 1, 0)
-		Knob.Position = UDim2.new(VisualRatio, 0, 0.5, 0)
+		Animation:Play(Fill, { Size = UDim2.new(VisualRatio, 0, 1, 0) }, { Time = PreviewLayout and 0.08 or 0.04 })
+		Animation:Play(Knob, { Position = UDim2.new(VisualRatio, 0, 0.5, 0) }, { Time = PreviewLayout and 0.08 or 0.04 })
 		if not SkipCallback then
 			Utility:SafeCall(self.Changed, self.Value)
 		end
@@ -1206,25 +1247,30 @@ function Dropdown.new(Section, Options)
 	self.Open = false
 
 	local CurrentTheme = Theme:Get()
+	local WindowSettings = Section.Tab and Section.Tab.Window and Section.Tab.Window.Settings or {}
+	local PreviewLayout = WindowSettings.Layout == "Preview" or WindowSettings.Style == "Preview" or WindowSettings.PreviewLayout == true
+	local RowTransparency = Options.BackgroundTransparency or (PreviewLayout and 1 or 0)
+	local StrokeTransparency = Options.StrokeTransparency or WindowSettings.RowStrokeTransparency or (PreviewLayout and 0.72 or 0.25)
 
 	local Row = Utility:Create("Frame", {
 		Name = "Dropdown",
-		Size = UDim2.new(1, 0, 0, 42),
+		Size = UDim2.new(1, 0, 0, Options.Height or (PreviewLayout and 45 or 42)),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = CurrentTheme.Secondary,
+		BackgroundTransparency = RowTransparency,
 		BorderSizePixel = 0,
 		Parent = Section.Body,
 	})
-	Utility:Round(Row, 9)
-	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, 0.25)
-	Utility:Padding(Row, 8)
+	Utility:Round(Row, Options.Radius or (PreviewLayout and 0 or 9))
+	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, StrokeTransparency)
+	Utility:Padding(Row, PreviewLayout and 0 or 8)
 	Theme:Register(Row, "BackgroundColor3", "Secondary")
 	Theme:Register(Stroke, "Color", "Border")
-	Utility:List(Row, 6)
+	Utility:List(Row, PreviewLayout and 0 or 6)
 
 	local Header = Utility:Create("TextButton", {
 		Name = "Header",
-		Size = UDim2.new(1, 0, 0, 28),
+		Size = UDim2.new(1, 0, 0, PreviewLayout and 45 or 28),
 		BackgroundTransparency = 1,
 		Font = Enum.Font.GothamMedium,
 		Text = "",
@@ -1238,24 +1284,31 @@ function Dropdown.new(Section, Options)
 		Font = Enum.Font.GothamMedium,
 		Text = Options.Text or Options.Name or "Dropdown",
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextSize = Options.TextSize or (PreviewLayout and 13 or 14),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Header,
 	})
+	Label.Position = UDim2.new(0, PreviewLayout and 12 or 0, 0, 0)
 	Theme:Register(Label, "TextColor3", "Text")
 
 	local ValueLabel = Utility:Create("TextLabel", {
-		BackgroundTransparency = 1,
+		BackgroundColor3 = CurrentTheme.SurfaceLight,
+		BackgroundTransparency = PreviewLayout and 0 or 1,
+		BorderSizePixel = 0,
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, 0, 0, 0),
-		Size = UDim2.new(0.5, 0, 1, 0),
+		Position = PreviewLayout and UDim2.new(1, -12, 0.5, -15) or UDim2.new(1, 0, 0, 0),
+		Size = PreviewLayout and UDim2.new(0, 78, 0, 30) or UDim2.new(0.5, 0, 1, 0),
 		Font = Enum.Font.Gotham,
 		Text = tostring(self.Value or "None") .. "  v",
 		TextColor3 = CurrentTheme.SubText,
-		TextSize = 13,
-		TextXAlignment = Enum.TextXAlignment.Right,
+		TextSize = PreviewLayout and 12 or 13,
+		TextXAlignment = Enum.TextXAlignment.Center,
 		Parent = Header,
 	})
+	if PreviewLayout then
+		Utility:Round(ValueLabel, 7)
+	end
+	Theme:Register(ValueLabel, "BackgroundColor3", "SurfaceLight")
 	Theme:Register(ValueLabel, "TextColor3", "SubText")
 
 	local OptionsFrame = Utility:Create("Frame", {
@@ -1300,6 +1353,10 @@ function Dropdown.new(Section, Options)
 				Parent = OptionsFrame,
 			})
 			Utility:Round(OptionButton, 7)
+			if PreviewLayout then
+				OptionButton.TextXAlignment = Enum.TextXAlignment.Left
+				Utility:Padding(OptionButton, 10)
+			end
 			Theme:Register(OptionButton, "TextColor3", "Text")
 
 			OptionButton.MouseEnter:Connect(function()
@@ -1321,6 +1378,9 @@ function Dropdown.new(Section, Options)
 		self.Open = Force ~= nil and Force or not self.Open
 		OptionsFrame.Visible = self.Open
 		ValueLabel.Text = tostring(self.Value or "None") .. (self.Open and "  ^" or "  v")
+		if PreviewLayout then
+			Animation:Play(ValueLabel, { TextColor3 = self.Open and Theme:Get().Accent or Theme:Get().SubText }, { Time = 0.12 })
+		end
 	end
 
 	Header.MouseButton1Click:Connect(function()
@@ -1386,16 +1446,21 @@ function Keybind.new(Section, Options)
 	self.Connections = {}
 
 	local CurrentTheme = Theme:Get()
+	local WindowSettings = Section.Tab and Section.Tab.Window and Section.Tab.Window.Settings or {}
+	local PreviewLayout = WindowSettings.Layout == "Preview" or WindowSettings.Style == "Preview" or WindowSettings.PreviewLayout == true
+	local RowTransparency = Options.BackgroundTransparency or (PreviewLayout and 1 or 0)
+	local StrokeTransparency = Options.StrokeTransparency or WindowSettings.RowStrokeTransparency or (PreviewLayout and 0.72 or 0.25)
 
 	local Row = Utility:Create("Frame", {
 		Name = "Keybind",
-		Size = UDim2.new(1, 0, 0, 40),
+		Size = UDim2.new(1, 0, 0, Options.Height or (PreviewLayout and 45 or 40)),
 		BackgroundColor3 = CurrentTheme.Secondary,
+		BackgroundTransparency = RowTransparency,
 		BorderSizePixel = 0,
 		Parent = Section.Body,
 	})
-	Utility:Round(Row, 9)
-	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, 0.25)
+	Utility:Round(Row, Options.Radius or (PreviewLayout and 0 or 9))
+	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, StrokeTransparency)
 	Theme:Register(Row, "BackgroundColor3", "Secondary")
 	Theme:Register(Stroke, "Color", "Border")
 
@@ -1406,7 +1471,7 @@ function Keybind.new(Section, Options)
 		Font = Enum.Font.GothamMedium,
 		Text = Options.Text or Options.Name or "Keybind",
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextSize = Options.TextSize or (PreviewLayout and 13 or 14),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Row,
 	})
@@ -1416,24 +1481,25 @@ function Keybind.new(Section, Options)
 		Name = "BindButton",
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -10, 0.5, 0),
-		Size = UDim2.new(0, 78, 0, 26),
-		BackgroundColor3 = CurrentTheme.Surface,
+		Size = UDim2.new(0, PreviewLayout and 92 or 78, 0, PreviewLayout and 28 or 26),
+		BackgroundColor3 = CurrentTheme.SurfaceLight,
 		BorderSizePixel = 0,
-		Font = Enum.Font.Gotham,
+		Font = PreviewLayout and Enum.Font.Code or Enum.Font.Gotham,
 		Text = self.Key,
-		TextColor3 = CurrentTheme.SubText,
+		TextColor3 = PreviewLayout and CurrentTheme.Accent or CurrentTheme.SubText,
 		TextSize = 12,
 		AutoButtonColor = false,
 		Parent = Row,
 	})
 	Utility:Round(Button, 7)
-	Theme:Register(Button, "BackgroundColor3", "Surface")
-	Theme:Register(Button, "TextColor3", "SubText")
+	Theme:Register(Button, "BackgroundColor3", "SurfaceLight")
+	Theme:Register(Button, "TextColor3", PreviewLayout and "Accent" or "SubText")
 
 	table.insert(self.Connections, Button.MouseButton1Click:Connect(function()
 		self.Listening = true
 		Button.Text = "..."
 		Animation:Play(Button, { BackgroundColor3 = Theme:Get().Accent }, { Time = 0.12 })
+		Animation:Play(Button, { TextColor3 = Theme:Get().Background }, { Time = 0.12 })
 	end))
 
 	table.insert(self.Connections, UserInputService.InputBegan:Connect(function(Input, Processed)
@@ -1444,7 +1510,8 @@ function Keybind.new(Section, Options)
 			self.Key = Input.KeyCode.Name
 			self.Listening = false
 			Button.Text = self.Key
-			Animation:Play(Button, { BackgroundColor3 = Theme:Get().Surface }, { Time = 0.12 })
+			Animation:Play(Button, { BackgroundColor3 = Theme:Get().SurfaceLight }, { Time = 0.12 })
+			Animation:Play(Button, { TextColor3 = PreviewLayout and Theme:Get().Accent or Theme:Get().SubText }, { Time = 0.12 })
 			Utility:SafeCall(self.Callback, self.Key, true)
 		elseif Input.KeyCode.Name == self.Key then
 			Utility:SafeCall(self.Callback, self.Key, false)
@@ -1512,25 +1579,30 @@ function ColorPicker.new(Section, Options)
 	self.Open = false
 
 	local CurrentTheme = Theme:Get()
+	local WindowSettings = Section.Tab and Section.Tab.Window and Section.Tab.Window.Settings or {}
+	local PreviewLayout = WindowSettings.Layout == "Preview" or WindowSettings.Style == "Preview" or WindowSettings.PreviewLayout == true
+	local RowTransparency = Options.BackgroundTransparency or (PreviewLayout and 1 or 0)
+	local StrokeTransparency = Options.StrokeTransparency or WindowSettings.RowStrokeTransparency or (PreviewLayout and 0.72 or 0.25)
 
 	local Row = Utility:Create("Frame", {
 		Name = "ColorPicker",
-		Size = UDim2.new(1, 0, 0, 42),
+		Size = UDim2.new(1, 0, 0, Options.Height or (PreviewLayout and 45 or 42)),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = CurrentTheme.Secondary,
+		BackgroundTransparency = RowTransparency,
 		BorderSizePixel = 0,
 		Parent = Section.Body,
 	})
-	Utility:Round(Row, 9)
-	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, 0.25)
-	Utility:Padding(Row, 8)
+	Utility:Round(Row, Options.Radius or (PreviewLayout and 0 or 9))
+	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, StrokeTransparency)
+	Utility:Padding(Row, PreviewLayout and 0 or 8)
 	Theme:Register(Row, "BackgroundColor3", "Secondary")
 	Theme:Register(Stroke, "Color", "Border")
-	Utility:List(Row, 6)
+	Utility:List(Row, PreviewLayout and 0 or 6)
 
 	local Header = Utility:Create("TextButton", {
 		Name = "Header",
-		Size = UDim2.new(1, 0, 0, 28),
+		Size = UDim2.new(1, 0, 0, PreviewLayout and 45 or 28),
 		BackgroundTransparency = 1,
 		Text = "",
 		AutoButtonColor = false,
@@ -1543,16 +1615,17 @@ function ColorPicker.new(Section, Options)
 		Font = Enum.Font.GothamMedium,
 		Text = Options.Text or Options.Name or "Color",
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextSize = Options.TextSize or (PreviewLayout and 13 or 14),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Header,
 	})
+	Label.Position = UDim2.new(0, PreviewLayout and 12 or 0, 0, 0)
 	Theme:Register(Label, "TextColor3", "Text")
 
 	local Preview = Utility:Create("Frame", {
 		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, 0, 0.5, 0),
-		Size = UDim2.new(0, 32, 0, 22),
+		Position = UDim2.new(1, PreviewLayout and -12 or 0, 0.5, 0),
+		Size = UDim2.new(0, PreviewLayout and 36 or 32, 0, PreviewLayout and 24 or 22),
 		BackgroundColor3 = self.Value,
 		BorderSizePixel = 0,
 		Parent = Header,
@@ -1563,7 +1636,8 @@ function ColorPicker.new(Section, Options)
 
 	local Palette = Utility:Create("Frame", {
 		Name = "Palette",
-		Size = UDim2.new(1, 0, 0, 32),
+		Size = UDim2.new(1, PreviewLayout and -24 or 0, 0, 32),
+		Position = UDim2.new(0, PreviewLayout and 12 or 0, 0, 0),
 		BackgroundTransparency = 1,
 		Visible = false,
 		Parent = Row,
@@ -1598,6 +1672,9 @@ function ColorPicker.new(Section, Options)
 	Header.MouseButton1Click:Connect(function()
 		self.Open = not self.Open
 		Palette.Visible = self.Open
+		if PreviewLayout then
+			Animation:Play(Preview, { Size = self.Open and UDim2.new(0, 42, 0, 24) or UDim2.new(0, 36, 0, 24) }, { Time = 0.12 })
+		end
 	end)
 
 	self.Row = Row
@@ -1642,10 +1719,17 @@ function Section.new(Tab, Name, Options)
 	self.Elements = {}
 
 	local CurrentTheme = Theme:Get()
+	local WindowSettings = Tab.Window and Tab.Window.Settings or {}
+	local PreviewLayout = WindowSettings.Layout == "Preview" or WindowSettings.Style == "Preview" or WindowSettings.PreviewLayout == true
+	local TitleColorKey = Options.TitleColorKey or (PreviewLayout and "Accent" or "Text")
+	local ShouldUppercase = Options.UppercaseTitle == true or (PreviewLayout and Options.UppercaseTitle ~= false)
+	local SectionTitle = ShouldUppercase and string.upper(tostring(Name)) or Name
+	local ShowDivider = Options.TitleDivider == true or (PreviewLayout and Options.TitleDivider ~= false)
+	local TitleInset = Options.TitleInset or (PreviewLayout and 16 or 0)
 
 	local Frame = Utility:Create("Frame", {
 		Name = Name .. "Section",
-		Size = Options.Size or UDim2.new(1, Options.WidthOffset or -6, 0, 0),
+		Size = Options.Size or UDim2.new(1, Options.WidthOffset or (PreviewLayout and 0 or -6), 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = CurrentTheme.Surface,
 		BackgroundTransparency = Options.Transparency or Options.BackgroundTransparency or 0,
@@ -1654,41 +1738,72 @@ function Section.new(Tab, Name, Options)
 	})
 	Utility:Round(Frame, Options.Radius or CurrentTheme.CornerRadius or 12)
 	local Stroke = Utility:Stroke(Frame, CurrentTheme.Border, 1, 0.15)
-	Utility:Padding(Frame, Options.Padding or 12)
+	Utility:Padding(Frame, Options.Padding or (PreviewLayout and 0 or 12))
 	Theme:Register(Frame, "BackgroundColor3", "Surface")
 	Theme:Register(Stroke, "Color", "Border")
 
-	local Layout = Utility:List(Frame, Options.Spacing or 8)
+	local Layout = Utility:List(Frame, Options.Spacing or (PreviewLayout and 0 or 8))
 
 	local Title = Utility:Create("TextLabel", {
 		Name = "Title",
 		LayoutOrder = 1,
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, Options.TitleHeight or 20),
+		Size = UDim2.new(1, 0, 0, Options.TitleHeight or (PreviewLayout and 38 or 20)),
 		Visible = Options.ShowTitle ~= false,
-		Font = Options.TitleFont or Enum.Font.GothamBold,
-		Text = Name,
-		TextColor3 = CurrentTheme.Text,
-		TextSize = Options.TitleSize or 14,
+		Font = Options.TitleFont or (PreviewLayout and Enum.Font.Code or Enum.Font.GothamBold),
+		Text = SectionTitle,
+		TextColor3 = CurrentTheme[TitleColorKey] or CurrentTheme.Text,
+		TextSize = Options.TitleSize or (PreviewLayout and 12 or 14),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Frame,
 	})
-	Theme:Register(Title, "TextColor3", "Text")
+	if TitleInset > 0 then
+		local TitlePadding = Instance.new("UIPadding")
+		TitlePadding.PaddingLeft = UDim.new(0, TitleInset)
+		TitlePadding.PaddingRight = UDim.new(0, TitleInset)
+		TitlePadding.Parent = Title
+	end
+	Theme:Register(Title, "TextColor3", TitleColorKey)
+
+	local Divider = Utility:Create("Frame", {
+		Name = "TitleDivider",
+		LayoutOrder = 2,
+		Size = UDim2.new(1, 0, 0, 1),
+		Visible = ShowDivider and Options.ShowTitle ~= false,
+		BackgroundColor3 = CurrentTheme.Border,
+		BackgroundTransparency = Options.TitleDividerTransparency or (PreviewLayout and 0.45 or 0.65),
+		BorderSizePixel = 0,
+		Parent = Frame,
+	})
+	Theme:Register(Divider, "BackgroundColor3", "Border")
 
 	local Body = Utility:Create("Frame", {
 		Name = "Body",
-		LayoutOrder = Options.ShowTitle == false and 1 or 2,
+		LayoutOrder = Options.ShowTitle == false and 1 or 3,
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
 		Parent = Frame,
 	})
-	local BodyLayout = Utility:List(Body, Options.ItemSpacing or Options.Spacing or 8)
+	Utility:Padding(Body, Options.BodyPadding or (PreviewLayout and 0 or 0))
+	local BodyLayout = Utility:List(Body, Options.ItemSpacing or Options.Spacing or (PreviewLayout and 0 or 8))
 
 	self.Frame = Frame
 	self.Body = Body
 	self.Layout = Layout
 	self.BodyLayout = BodyLayout
+	self.Title = Title
+	self.Divider = Divider
+
+	if Options.Animate ~= false and WindowSettings.SectionAnimation ~= false then
+		local TargetTransparency = Frame.BackgroundTransparency
+		Frame.BackgroundTransparency = 1
+		task.defer(function()
+			if Frame.Parent then
+				Animation:Play(Frame, { BackgroundTransparency = TargetTransparency }, { Time = 0.18 })
+			end
+		end)
+	end
 
 	return self
 end
@@ -1773,16 +1888,20 @@ function Tab.new(Window, Name, Icon)
 
 	local CurrentTheme = Theme:Get()
 	local Settings = Window.Settings or {}
-	local TabHeight = Settings.TabHeight or 38
-	local TabRadius = Settings.TabRadius or 9
-	local TabTextInset = Settings.TabTextInset or 12
+	local PreviewLayout = Settings.Layout == "Preview" or Settings.Style == "Preview" or Settings.PreviewLayout == true
+	local PillTabs = Settings.TabStyle == "Pill" or Settings.TabPills == true or PreviewLayout
+	local TabHeight = Settings.TabHeight or (PreviewLayout and 40 or 38)
+	local TabRadius = Settings.TabRadius or (PreviewLayout and 8 or 9)
+	local TabTextInset = Settings.TabTextInset or (PreviewLayout and 38 or 12)
+	local TabIconSize = Settings.TabIconSize or (PreviewLayout and 22 or 20)
 	local IndicatorWidth = Settings.TabIndicatorWidth or 3
 	local IndicatorHeight = Settings.TabIndicatorHeight or 22
+	local UseIndicator = Settings.TabIndicator ~= false and not PillTabs
 
 	local Button = Utility:Create("TextButton", {
 		Name = Name .. "Tab",
 		Size = UDim2.new(1, 0, 0, TabHeight),
-		BackgroundColor3 = CurrentTheme.Surface,
+		BackgroundColor3 = PillTabs and (CurrentTheme.TabActive or CurrentTheme.Surface) or CurrentTheme.Surface,
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Text = "",
@@ -1797,6 +1916,7 @@ function Tab.new(Window, Name, Icon)
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 0, 0.5, 0),
 		Size = UDim2.new(0, IndicatorWidth, 0, 0),
+		Visible = UseIndicator,
 		BackgroundColor3 = CurrentTheme.Accent,
 		BorderSizePixel = 0,
 		Parent = Button,
@@ -1804,15 +1924,31 @@ function Tab.new(Window, Name, Icon)
 	Utility:Round(Indicator, 99)
 	Theme:Register(Indicator, "BackgroundColor3", "Accent")
 
+	local IconLabel = Utility:Create("TextLabel", {
+		Name = "Icon",
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, PreviewLayout and 10 or TabTextInset, 0.5, -math.floor(TabIconSize / 2)),
+		Size = UDim2.new(0, TabIconSize, 0, TabIconSize),
+		Visible = Icon ~= nil,
+		Font = Settings.TabIconFont or Enum.Font.GothamBold,
+		Text = Icon or "",
+		TextColor3 = CurrentTheme.Muted,
+		TextSize = Settings.TabIconTextSize or (PreviewLayout and 15 or 13),
+		TextXAlignment = Enum.TextXAlignment.Center,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		Parent = Button,
+	})
+	Theme:Register(IconLabel, "TextColor3", "Muted")
+
 	local Label = Utility:Create("TextLabel", {
 		Name = "Label",
 		BackgroundTransparency = 1,
-		Position = UDim2.new(0, TabTextInset, 0, 0),
-		Size = UDim2.new(1, -TabTextInset - 4, 1, 0),
+		Position = UDim2.new(0, Icon and TabTextInset or 12, 0, 0),
+		Size = UDim2.new(1, -(Icon and TabTextInset or 12) - 8, 1, 0),
 		Font = Settings.TabFont or Enum.Font.GothamMedium,
-		Text = (Icon and (Icon .. "  ") or "") .. Name,
+		Text = Name,
 		TextColor3 = CurrentTheme.SubText,
-		TextSize = Settings.TabTextSize or 13,
+		TextSize = Settings.TabTextSize or (PreviewLayout and 14 or 13),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Button,
 	})
@@ -1820,6 +1956,7 @@ function Tab.new(Window, Name, Icon)
 	local Page = Utility:Create("ScrollingFrame", {
 		Name = Name .. "Page",
 		Size = UDim2.new(1, 0, 1, 0),
+		Position = UDim2.new(0, 0, 0, 0),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		ScrollBarThickness = 3,
@@ -1829,19 +1966,24 @@ function Tab.new(Window, Name, Icon)
 		Parent = Window.Content,
 	})
 	Theme:Register(Page, "ScrollBarImageColor3", "Accent")
-	Utility:Padding(Page, 10)
-	local Layout = Utility:List(Page, 10)
-	Utility:AutoCanvas(Page, Layout, 22)
+	Utility:Padding(Page, Settings.PagePadding or (PreviewLayout and 0 or 10))
+	local Layout = Utility:List(Page, Settings.PageGap or (PreviewLayout and 12 or 10))
+	Utility:AutoCanvas(Page, Layout, Settings.PageCanvasPadding or (PreviewLayout and 14 or 22))
 
 	self.Button = Button
 	self.Indicator = Indicator
+	self.IconLabel = IconLabel
 	self.Label = Label
 	self.Page = Page
 	self.Layout = Layout
 	self.IndicatorWidth = IndicatorWidth
 	self.IndicatorHeight = IndicatorHeight
+	self.UseIndicator = UseIndicator
+	self.PillTabs = PillTabs
+	self.PageSlideOffset = Settings.PageSlideOffset or (PreviewLayout and 8 or 0)
+	self.PageAnimation = Settings.TabPageAnimation ~= false
 	self.SelectedTransparency = Settings.TabSelectedTransparency or 0
-	self.HoverTransparency = Settings.TabHoverTransparency or 0.55
+	self.HoverTransparency = Settings.TabHoverTransparency or (PillTabs and 0.1 or 0.55)
 	self.ThemeDisconnect = Theme:OnChanged(function()
 		self:_SetSelected(Window.ActiveTab == self)
 	end)
@@ -1852,12 +1994,24 @@ function Tab.new(Window, Name, Icon)
 
 	Button.MouseEnter:Connect(function()
 		if Window.ActiveTab == self then return end
-		Animation:Play(Button, { BackgroundTransparency = self.HoverTransparency }, { Time = 0.12 })
+		local ActiveTheme = Theme:Get()
+		Animation:Play(Button, {
+			BackgroundColor3 = ActiveTheme.TabHover or ActiveTheme.SurfaceLight,
+			BackgroundTransparency = self.HoverTransparency,
+		}, { Time = 0.12 })
+		Animation:Play(Label, { TextColor3 = ActiveTheme.Text }, { Time = 0.12 })
+		if IconLabel then
+			Animation:Play(IconLabel, { TextColor3 = ActiveTheme.Accent }, { Time = 0.12 })
+		end
 	end)
 
 	Button.MouseLeave:Connect(function()
 		if Window.ActiveTab == self then return end
 		Animation:Play(Button, { BackgroundTransparency = 1 }, { Time = 0.12 })
+		Animation:Play(Label, { TextColor3 = Theme:Get().SubText }, { Time = 0.12 })
+		if IconLabel then
+			Animation:Play(IconLabel, { TextColor3 = Theme:Get().Muted }, { Time = 0.12 })
+		end
 	end)
 
 	return self
@@ -1868,16 +2022,38 @@ function Tab:_SetSelected(IsSelected)
 		return
 	end
 
-	self.Page.Visible = IsSelected
+	if IsSelected then
+		self.Page.Visible = true
+		if self.PageAnimation then
+			self.Page.Position = UDim2.new(0, self.PageSlideOffset, 0, 0)
+			Animation:Play(self.Page, { Position = UDim2.new(0, 0, 0, 0) }, { Time = 0.18 })
+		end
+	else
+		self.Page.Visible = false
+	end
 
 	if IsSelected then
-		Animation:Play(self.Button, { BackgroundTransparency = self.SelectedTransparency }, { Time = 0.15 })
-		Animation:Play(self.Indicator, { Size = UDim2.new(0, self.IndicatorWidth, 0, self.IndicatorHeight) }, { Time = 0.15 })
-		Animation:Play(self.Label, { TextColor3 = Theme:Get().Text }, { Time = 0.15 })
+		local ActiveTheme = Theme:Get()
+		Animation:Play(self.Button, {
+			BackgroundColor3 = self.PillTabs and (ActiveTheme.TabActive or ActiveTheme.Surface) or ActiveTheme.Surface,
+			BackgroundTransparency = self.SelectedTransparency,
+		}, { Time = 0.15 })
+		if self.UseIndicator then
+			Animation:Play(self.Indicator, { Size = UDim2.new(0, self.IndicatorWidth, 0, self.IndicatorHeight) }, { Time = 0.15 })
+		end
+		Animation:Play(self.Label, { TextColor3 = self.PillTabs and ActiveTheme.Accent or ActiveTheme.Text }, { Time = 0.15 })
+		if self.IconLabel then
+			Animation:Play(self.IconLabel, { TextColor3 = ActiveTheme.Accent }, { Time = 0.15 })
+		end
 	else
 		Animation:Play(self.Button, { BackgroundTransparency = 1 }, { Time = 0.15 })
-		Animation:Play(self.Indicator, { Size = UDim2.new(0, self.IndicatorWidth, 0, 0) }, { Time = 0.15 })
+		if self.UseIndicator then
+			Animation:Play(self.Indicator, { Size = UDim2.new(0, self.IndicatorWidth, 0, 0) }, { Time = 0.15 })
+		end
 		Animation:Play(self.Label, { TextColor3 = Theme:Get().SubText }, { Time = 0.15 })
+		if self.IconLabel then
+			Animation:Play(self.IconLabel, { TextColor3 = Theme:Get().Muted }, { Time = 0.15 })
+		end
 	end
 end
 
@@ -1953,6 +2129,64 @@ local function ResolveKeyCode(Key)
 	return nil
 end
 
+local function ColorToHex(Color)
+	return string.format(
+		"#%02X%02X%02X",
+		math.floor(Color.R * 255 + 0.5),
+		math.floor(Color.G * 255 + 0.5),
+		math.floor(Color.B * 255 + 0.5)
+	)
+end
+
+local function EscapeRichText(Text)
+	local Escaped = tostring(Text)
+	Escaped = Escaped:gsub("&", "&amp;")
+	Escaped = Escaped:gsub("<", "&lt;")
+	Escaped = Escaped:gsub(">", "&gt;")
+	return Escaped
+end
+
+local function BuildTitleText(Settings, ThemeValues, TitleText)
+	if typeof(Settings.TitleRichText) == "string" then
+		return Settings.TitleRichText, true
+	end
+
+	local AccentWord = Settings.TitleAccent or Settings.AccentTitle or Settings.HighlightTitle
+	local Version = Settings.Version or Settings.ScriptVersion
+	if not AccentWord and not Version and Settings.TitleRichText ~= true then
+		return TitleText, false
+	end
+
+	local Rendered = EscapeRichText(TitleText)
+	local UsesRichText = Settings.TitleRichText == true
+
+	if AccentWord then
+		local Word = EscapeRichText(AccentWord)
+		local StartIndex, EndIndex = Rendered:find(Word, 1, true)
+		if StartIndex then
+			local AccentColor = ColorToHex(Settings.TitleAccentColor or ThemeValues.Accent)
+			Rendered = Rendered:sub(1, StartIndex - 1)
+				.. "<font color=\"" .. AccentColor .. "\">"
+				.. Rendered:sub(StartIndex, EndIndex)
+				.. "</font>"
+				.. Rendered:sub(EndIndex + 1)
+			UsesRichText = true
+		end
+	end
+
+	if Version then
+		Rendered = Rendered
+			.. " <font size=\"10\" color=\""
+			.. ColorToHex(Settings.VersionColor or ThemeValues.Muted)
+			.. "\">"
+			.. EscapeRichText(Version)
+			.. "</font>"
+		UsesRichText = true
+	end
+
+	return Rendered, UsesRichText
+end
+
 function Window.new(Settings)
 	Settings = Settings or {}
 
@@ -1974,22 +2208,31 @@ function Window.new(Settings)
 	local CurrentTheme = Theme:Get()
 	local Player = Players.LocalPlayer
 	local ParentGui = Settings.Parent or (Player and Player:WaitForChild("PlayerGui"))
-	local WindowSize = Settings.Size or UDim2.new(0, Settings.Width or 680, 0, Settings.Height or 450)
-	local TopBarHeight = Settings.TopBarHeight or Settings.TopbarHeight or 56
-	local OuterPadding = Settings.Padding or 14
-	local Gap = Settings.Gap or 14
+	local PreviewLayout = Settings.Layout == "Preview" or Settings.Style == "Preview" or Settings.PreviewLayout == true
+	local WindowSize = Settings.Size or UDim2.new(0, Settings.Width or (PreviewLayout and 672 or 680), 0, Settings.Height or (PreviewLayout and 430 or 450))
+	local TopBarHeight = Settings.TopBarHeight or Settings.TopbarHeight or (PreviewLayout and 54 or 56)
+	local OuterPadding = Settings.Padding or (PreviewLayout and 12 or 14)
+	local TopBarPadding = Settings.TopBarPadding or (PreviewLayout and 18 or OuterPadding)
+	local Gap = Settings.Gap or (PreviewLayout and 14 or 14)
 	local ContentGap = Settings.ContentGap or 10
-	local SidebarWidth = Settings.SidebarWidth or 160
+	local SidebarWidth = Settings.SidebarWidth or (PreviewLayout and 160 or 160)
 	local HasSidebar = Settings.Sidebar ~= false
-	local ContentX = HasSidebar and (OuterPadding + SidebarWidth + Gap) or OuterPadding
 	local ContentTop = TopBarHeight + ContentGap
-	local ContentWidthOffset = HasSidebar and -(OuterPadding * 2 + SidebarWidth + Gap) or -(OuterPadding * 2)
-	local ContentHeightOffset = -(ContentTop + OuterPadding)
+	local ContentX = HasSidebar and ((PreviewLayout and SidebarWidth or OuterPadding + SidebarWidth) + Gap) or OuterPadding
+	local ContentRightPadding = Settings.ContentRightPadding or (PreviewLayout and 12 or OuterPadding)
+	local ContentBottomPadding = Settings.ContentBottomPadding or (PreviewLayout and 12 or OuterPadding)
+	local ContentWidthOffset = -(ContentX + ContentRightPadding)
+	local ContentHeightOffset = -(ContentTop + ContentBottomPadding)
+	local SidebarX = Settings.SidebarX or (PreviewLayout and 0 or OuterPadding)
+	local SidebarY = Settings.SidebarY or (PreviewLayout and TopBarHeight or ContentTop)
+	local SidebarHeightOffset = Settings.SidebarHeightOffset or (PreviewLayout and -TopBarHeight or ContentHeightOffset)
 	local ShowControls = Settings.Controls ~= false
 	local ShowClose = ShowControls and Settings.CloseButton ~= false
 	local ShowMinimize = ShowControls and Settings.MinimizeButton ~= false
 	local ControlReserve = ShowControls and 90 or 16
-	local TitleX = Settings.Logo == false and OuterPadding or (OuterPadding + 42)
+	local LogoSize = Settings.LogoSize or (PreviewLayout and 28 or 32)
+	local LogoRadius = Settings.LogoRadius or (PreviewLayout and 9 or 10)
+	local TitleX = Settings.Logo == false and TopBarPadding or (TopBarPadding + LogoSize + 12)
 	local MainAnchor = Settings.AnchorPoint or Vector2.new(0.5, 0.5)
 	local MainPosition = Settings.Position or UDim2.new(0.5, 0, 0.5, 0)
 	local Radius = Settings.Radius or CurrentTheme.CornerRadius
@@ -2062,33 +2305,50 @@ function Window.new(Settings)
 	self.TopBar = TopBar
 
 	if Settings.AccentLine ~= false then
+		local AccentLineThemeKey = Settings.AccentLineThemeKey or (PreviewLayout and "Border" or "Accent")
 		local AccentLine = Utility:Create("Frame", {
 			Name = "AccentLine",
 			AnchorPoint = Vector2.new(0, 1),
 			Position = UDim2.new(0, 0, 1, 0),
 			Size = UDim2.new(1, 0, 0, Settings.AccentLineHeight or 1),
-			BackgroundColor3 = CurrentTheme.Accent,
-			BackgroundTransparency = Settings.AccentLineTransparency or 0.35,
+			BackgroundColor3 = CurrentTheme[AccentLineThemeKey] or CurrentTheme.Accent,
+			BackgroundTransparency = Settings.AccentLineTransparency or (PreviewLayout and 0.35 or 0.35),
 			BorderSizePixel = 0,
 			Parent = TopBar,
 		})
-		Theme:Register(AccentLine, "BackgroundColor3", "Accent")
+		Theme:Register(AccentLine, "BackgroundColor3", AccentLineThemeKey)
 		self.AccentLine = AccentLine
+	end
+
+	local LogoY = math.floor((TopBarHeight - LogoSize) / 2)
+	if Settings.Logo ~= false and (Settings.LogoGlow == true or (PreviewLayout and Settings.LogoGlow ~= false)) then
+		local LogoGlow = Utility:Create("Frame", {
+			Name = "LogoGlow",
+			BackgroundColor3 = CurrentTheme.Accent,
+			BackgroundTransparency = Settings.LogoGlowTransparency or 0.84,
+			Position = UDim2.new(0, TopBarPadding - 4, 0, LogoY - 4),
+			Size = UDim2.new(0, LogoSize + 8, 0, LogoSize + 8),
+			BorderSizePixel = 0,
+			Parent = TopBar,
+		})
+		Utility:Round(LogoGlow, LogoRadius + 6)
+		Theme:Register(LogoGlow, "BackgroundColor3", "Accent")
+		self.LogoGlow = LogoGlow
 	end
 
 	local Logo = Utility:Create("TextLabel", {
 		Name = "Logo",
 		BackgroundColor3 = CurrentTheme.Surface,
-		Position = UDim2.new(0, OuterPadding, 0, math.floor((TopBarHeight - 32) / 2)),
-		Size = UDim2.new(0, 32, 0, 32),
+		Position = UDim2.new(0, TopBarPadding, 0, LogoY),
+		Size = UDim2.new(0, LogoSize, 0, LogoSize),
 		Visible = Settings.Logo ~= false,
 		Font = Settings.LogoFont or Enum.Font.GothamBold,
 		Text = (Settings.LogoImage or Settings.LogoId) and "" or (Settings.LogoText or "L"),
 		TextColor3 = CurrentTheme.AccentLight,
-		TextSize = Settings.LogoTextSize or 18,
+		TextSize = Settings.LogoTextSize or (PreviewLayout and 14 or 18),
 		Parent = TopBar,
 	})
-	Utility:Round(Logo, Settings.LogoRadius or 10)
+	Utility:Round(Logo, LogoRadius)
 	Theme:Register(Logo, "BackgroundColor3", "Surface")
 	Theme:Register(Logo, "TextColor3", "AccentLight")
 	self.Logo = Logo
@@ -2107,16 +2367,22 @@ function Window.new(Settings)
 		self.LogoImage = LogoImage
 	end
 
+	local RawTitleText = Settings.Name or Settings.Title or "Locito Hub"
+	local TitleText, TitleRichText = BuildTitleText(Settings, CurrentTheme, RawTitleText)
+	local HasSubtitle = Settings.Subtitle ~= false and Settings.Subtitle ~= nil
+	local TitleY = Settings.TitleY or (HasSubtitle and 9 or math.floor((TopBarHeight - 22) / 2))
+
 	local Title = Utility:Create("TextLabel", {
 		Name = "Title",
 		BackgroundTransparency = 1,
-		Position = UDim2.new(0, TitleX, 0, 9),
+		Position = UDim2.new(0, TitleX, 0, TitleY),
 		Size = UDim2.new(1, -TitleX - ControlReserve, 0, 22),
 		Font = Settings.TitleFont or Enum.Font.GothamBold,
-		Text = Settings.Name or Settings.Title or "Locito Hub",
+		Text = TitleText,
 		TextColor3 = CurrentTheme.Text,
-		TextSize = Settings.TitleSize or 18,
+		TextSize = Settings.TitleSize or (PreviewLayout and 14 or 18),
 		TextXAlignment = Enum.TextXAlignment.Left,
+		RichText = TitleRichText,
 		Parent = TopBar,
 	})
 	Theme:Register(Title, "TextColor3", "Text")
@@ -2127,7 +2393,7 @@ function Window.new(Settings)
 		BackgroundTransparency = 1,
 		Position = UDim2.new(0, TitleX, 0, 30),
 		Size = UDim2.new(1, -TitleX - ControlReserve, 0, 16),
-		Visible = Settings.Subtitle ~= false,
+		Visible = HasSubtitle,
 		Font = Settings.SubtitleFont or Enum.Font.Gotham,
 		Text = Settings.Subtitle or "Original Roblox UI Library",
 		TextColor3 = CurrentTheme.SubText,
@@ -2141,12 +2407,13 @@ function Window.new(Settings)
 	local Close = Utility:Create("TextButton", {
 		Name = "Close",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -OuterPadding, 0, math.floor((TopBarHeight - 28) / 2)),
-		Size = UDim2.new(0, 28, 0, 28),
+		Position = UDim2.new(1, -TopBarPadding, 0, math.floor((TopBarHeight - (Settings.ControlSize or (PreviewLayout and 24 or 28))) / 2)),
+		Size = UDim2.new(0, Settings.ControlSize or (PreviewLayout and 24 or 28), 0, Settings.ControlSize or (PreviewLayout and 24 or 28)),
 		Visible = ShowClose,
 		BackgroundColor3 = CurrentTheme.Surface,
+		BackgroundTransparency = Settings.ControlTransparency or (PreviewLayout and 1 or 0),
 		Font = Enum.Font.GothamBold,
-		Text = "X",
+		Text = Settings.CloseText or (PreviewLayout and "x" or "X"),
 		TextColor3 = CurrentTheme.SubText,
 		TextSize = 16,
 		AutoButtonColor = false,
@@ -2159,10 +2426,11 @@ function Window.new(Settings)
 	local Minimize = Utility:Create("TextButton", {
 		Name = "Minimize",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, ShowClose and -(OuterPadding + 34) or -OuterPadding, 0, math.floor((TopBarHeight - 28) / 2)),
-		Size = UDim2.new(0, 28, 0, 28),
+		Position = UDim2.new(1, ShowClose and -(TopBarPadding + 34) or -TopBarPadding, 0, math.floor((TopBarHeight - (Settings.ControlSize or (PreviewLayout and 24 or 28))) / 2)),
+		Size = UDim2.new(0, Settings.ControlSize or (PreviewLayout and 24 or 28), 0, Settings.ControlSize or (PreviewLayout and 24 or 28)),
 		Visible = ShowMinimize,
 		BackgroundColor3 = CurrentTheme.Surface,
+		BackgroundTransparency = Settings.ControlTransparency or (PreviewLayout and 1 or 0),
 		Font = Enum.Font.GothamBold,
 		Text = "-",
 		TextColor3 = CurrentTheme.SubText,
@@ -2176,23 +2444,38 @@ function Window.new(Settings)
 
 	local Sidebar = Utility:Create("Frame", {
 		Name = "Sidebar",
-		Position = UDim2.new(0, OuterPadding, 0, ContentTop),
-		Size = UDim2.new(0, SidebarWidth, 1, ContentHeightOffset),
+		Position = UDim2.new(0, SidebarX, 0, SidebarY),
+		Size = UDim2.new(0, SidebarWidth, 1, SidebarHeightOffset),
 		Visible = HasSidebar,
 		BackgroundColor3 = CurrentTheme.Secondary,
 		BorderSizePixel = 0,
 		Parent = Main,
 	})
-	Utility:Round(Sidebar, Settings.PanelRadius or Radius)
+	Utility:Round(Sidebar, Settings.SidebarRadius or (PreviewLayout and 0 or Settings.PanelRadius or Radius))
 	Theme:Register(Sidebar, "BackgroundColor3", "Secondary")
 	self.Sidebar = Sidebar
 
+	if HasSidebar and (Settings.SidebarDivider == true or (PreviewLayout and Settings.SidebarDivider ~= false)) then
+		local SidebarDivider = Utility:Create("Frame", {
+			Name = "SidebarDivider",
+			Position = UDim2.new(0, SidebarWidth, 0, TopBarHeight),
+			Size = UDim2.new(0, 1, 1, -TopBarHeight),
+			BackgroundColor3 = CurrentTheme.Border,
+			BackgroundTransparency = Settings.SidebarDividerTransparency or 0.45,
+			BorderSizePixel = 0,
+			Parent = Main,
+		})
+		Theme:Register(SidebarDivider, "BackgroundColor3", "Border")
+		self.SidebarDivider = SidebarDivider
+	end
+
+	local SidebarListInset = Settings.SidebarListInset or (PreviewLayout and 8 or 8)
 	local SidebarList = Utility:Create("ScrollingFrame", {
 		Name = "TabList",
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Position = UDim2.new(0, 8, 0, 8),
-		Size = UDim2.new(1, -16, 1, -16),
+		Position = UDim2.new(0, SidebarListInset, 0, SidebarListInset),
+		Size = UDim2.new(1, -(SidebarListInset * 2), 1, -(SidebarListInset * 2)),
 		ScrollBarThickness = 2,
 		ScrollBarImageColor3 = CurrentTheme.Accent,
 		CanvasSize = UDim2.new(0, 0, 0, 0),
@@ -2208,11 +2491,12 @@ function Window.new(Settings)
 		Position = UDim2.new(0, ContentX, 0, ContentTop),
 		Size = UDim2.new(1, ContentWidthOffset, 1, ContentHeightOffset),
 		BackgroundColor3 = CurrentTheme.Secondary,
+		BackgroundTransparency = Settings.ContentTransparency or (PreviewLayout and 1 or 0),
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 		Parent = Main,
 	})
-	Utility:Round(Content, Settings.PanelRadius or Radius)
+	Utility:Round(Content, Settings.ContentRadius or Settings.PanelRadius or (PreviewLayout and 0 or Radius))
 	Theme:Register(Content, "BackgroundColor3", "Secondary")
 	self.Content = Content
 

@@ -28,86 +28,113 @@ local Success, ErrorMessage = xpcall(function()
 	end
 
 	local Window = LocitoUI.new({
-		Name = "Locito",
-		Subtitle = "RightControl toggles menu",
-		LogoText = "LC",
+		Name = "Locito Hub",
+		TitleAccent = "Hub",
+		Version = "v1.0",
+		Subtitle = false,
+		LogoText = "L",
 		Theme = "Phantom",
+		Layout = "Preview",
 		Parent = Parent,
-		Width = 620,
-		Height = 390,
-		SidebarWidth = 138,
-		Padding = 10,
-		Gap = 8,
-		ContentGap = 8,
-		TopBarHeight = 52,
-		PanelRadius = 10,
-		TabHeight = 34,
-		TabIndicatorHeight = 18,
-		TabSelectedTransparency = 0.08,
-		TabHoverTransparency = 0.55,
+		Width = 672,
+		Height = 430,
+		SidebarWidth = 160,
+		TopBarHeight = 54,
+		TabHeight = 40,
+		TabStyle = "Pill",
+		TabSelectedTransparency = 0,
+		TabHoverTransparency = 0.15,
+		PageSlideOffset = 8,
 		Shadow = true,
-		ShadowTransparency = 0.5,
+		ShadowTransparency = 0.42,
 		ToggleKey = "RightControl",
 		ToggleAnimationTime = 0.18,
 		DisplayOrder = 999999,
 		Animate = true,
 	})
 
-	local Home = Window:CreateTab("Home", "H")
-	local Main = Home:CreateSection({
-		Name = "Dashboard",
-		Padding = 10,
-		ItemSpacing = 6,
-		Radius = 10,
-	})
+	local Main = Window:CreateTab("Main", "+")
+	local Combat = Main:CreateSection("Combat")
 
-	Main:Paragraph({
-		Title = "LocitoUI loaded",
-		Body = "RightControl toggles this menu. The logo, theme, tabs, and animation are all customizable.",
-	})
-
-	Main:Button({
-		Text = "Hide menu",
-		Style = "Accent",
-		Height = 34,
-		Callback = function()
-			Window:Hide()
-		end,
-	})
-
-	Main:Toggle({
-		Text = "Demo toggle",
+	Combat:Toggle({
+		Text = "Silent Aim",
 		Default = false,
 		Changed = function(Value)
-			Window:Notify("Toggle", "Value: " .. tostring(Value), 2, "Info")
+			Window:Notify("Silent Aim", "Value: " .. tostring(Value), 2, "Info")
 		end,
 	})
 
-	Main:Slider({
-		Text = "Demo slider",
+	Combat:Slider({
+		Text = "FOV",
 		Min = 0,
-		Max = 100,
-		Default = 50,
+		Max = 240,
+		Default = 120,
 		Step = 5,
-		Suffix = "%",
 	})
 
-	Main:ColorPicker({
-		Text = "Live accent",
+	Combat:Toggle({
+		Text = "Team Check",
+		Default = true,
+	})
+
+	Combat:Dropdown({
+		Text = "Aim Part",
+		Options = { "Head", "Torso", "HumanoidRootPart" },
+		Default = "Head",
+	})
+
+	local Visuals = Main:CreateSection("Visuals")
+
+	Visuals:Toggle({
+		Text = "ESP",
+		Default = false,
+	})
+
+	Visuals:Toggle({
+		Text = "Chams",
+		Default = false,
+	})
+
+	Visuals:ColorPicker({
+		Text = "Accent",
 		ApplyToTheme = true,
 		CloseOnSelect = true,
 		Presets = {
-			Color3.fromRGB(255, 120, 210),
-			Color3.fromRGB(0, 157, 255),
+			Color3.fromRGB(0, 218, 222),
+			Color3.fromRGB(255, 86, 146),
 			Color3.fromRGB(39, 212, 121),
-			Color3.fromRGB(255, 186, 73),
+			Color3.fromRGB(251, 191, 36),
 		},
 	})
 
-	local Settings = Window:CreateTab("Settings", "S")
-	local ThemeSection = Settings:CreateSection("Theme")
+	local Player = Window:CreateTab("Player", "P")
+	local Movement = Player:CreateSection("Movement")
 
-	ThemeSection:Dropdown({
+	Movement:Slider({
+		Text = "Walk Speed",
+		Min = 16,
+		Max = 120,
+		Default = 32,
+		Step = 2,
+	})
+
+	Movement:Slider({
+		Text = "Jump Power",
+		Min = 50,
+		Max = 180,
+		Default = 70,
+		Step = 5,
+	})
+
+	Movement:Toggle({
+		Text = "Auto Sprint",
+		Default = true,
+	})
+
+	local Misc = Window:CreateTab("Misc", "=")
+	local Settings = Misc:CreateSection("Settings")
+
+	Settings:Dropdown({
 		Text = "Theme",
 		Options = { "Phantom", "Nebula", "Carbon", "Ocean", "Emerald" },
 		Default = "Phantom",
@@ -116,7 +143,7 @@ local Success, ErrorMessage = xpcall(function()
 		end,
 	})
 
-	ThemeSection:Keybind({
+	Settings:Keybind({
 		Text = "Menu key",
 		Default = "RightControl",
 		Changed = function(Key, IsNewBind)
@@ -124,6 +151,14 @@ local Success, ErrorMessage = xpcall(function()
 				Window:SetToggleKey(Key)
 				Window:Notify("Menu key", "Toggle key set to " .. Key, 2, "Success")
 			end
+		end,
+	})
+
+	Settings:Button({
+		Text = "Hide Menu",
+		Style = "Accent",
+		Callback = function()
+			Window:Hide()
 		end,
 	})
 end, function(Message)

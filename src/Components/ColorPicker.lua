@@ -7,6 +7,7 @@ ColorPicker.__index = ColorPicker
 
 local Utility = require(script.Parent.Parent.Utility)
 local Theme = require(script.Parent.Parent.Theme)
+local Animation = require(script.Parent.Parent.Animation)
 
 local Presets = {
 	Color3.fromRGB(155, 90, 255),
@@ -31,25 +32,30 @@ function ColorPicker.new(Section, Options)
 	self.Open = false
 
 	local CurrentTheme = Theme:Get()
+	local WindowSettings = Section.Tab and Section.Tab.Window and Section.Tab.Window.Settings or {}
+	local PreviewLayout = WindowSettings.Layout == "Preview" or WindowSettings.Style == "Preview" or WindowSettings.PreviewLayout == true
+	local RowTransparency = Options.BackgroundTransparency or (PreviewLayout and 1 or 0)
+	local StrokeTransparency = Options.StrokeTransparency or WindowSettings.RowStrokeTransparency or (PreviewLayout and 0.72 or 0.25)
 
 	local Row = Utility:Create("Frame", {
 		Name = "ColorPicker",
-		Size = UDim2.new(1, 0, 0, 42),
+		Size = UDim2.new(1, 0, 0, Options.Height or (PreviewLayout and 45 or 42)),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = CurrentTheme.Secondary,
+		BackgroundTransparency = RowTransparency,
 		BorderSizePixel = 0,
 		Parent = Section.Body,
 	})
-	Utility:Round(Row, 9)
-	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, 0.25)
-	Utility:Padding(Row, 8)
+	Utility:Round(Row, Options.Radius or (PreviewLayout and 0 or 9))
+	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, StrokeTransparency)
+	Utility:Padding(Row, PreviewLayout and 0 or 8)
 	Theme:Register(Row, "BackgroundColor3", "Secondary")
 	Theme:Register(Stroke, "Color", "Border")
-	Utility:List(Row, 6)
+	Utility:List(Row, PreviewLayout and 0 or 6)
 
 	local Header = Utility:Create("TextButton", {
 		Name = "Header",
-		Size = UDim2.new(1, 0, 0, 28),
+		Size = UDim2.new(1, 0, 0, PreviewLayout and 45 or 28),
 		BackgroundTransparency = 1,
 		Text = "",
 		AutoButtonColor = false,
@@ -62,16 +68,17 @@ function ColorPicker.new(Section, Options)
 		Font = Enum.Font.GothamMedium,
 		Text = Options.Text or Options.Name or "Color",
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextSize = Options.TextSize or (PreviewLayout and 13 or 14),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Header,
 	})
+	Label.Position = UDim2.new(0, PreviewLayout and 12 or 0, 0, 0)
 	Theme:Register(Label, "TextColor3", "Text")
 
 	local Preview = Utility:Create("Frame", {
 		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, 0, 0.5, 0),
-		Size = UDim2.new(0, 32, 0, 22),
+		Position = UDim2.new(1, PreviewLayout and -12 or 0, 0.5, 0),
+		Size = UDim2.new(0, PreviewLayout and 36 or 32, 0, PreviewLayout and 24 or 22),
 		BackgroundColor3 = self.Value,
 		BorderSizePixel = 0,
 		Parent = Header,
@@ -82,7 +89,8 @@ function ColorPicker.new(Section, Options)
 
 	local Palette = Utility:Create("Frame", {
 		Name = "Palette",
-		Size = UDim2.new(1, 0, 0, 32),
+		Size = UDim2.new(1, PreviewLayout and -24 or 0, 0, 32),
+		Position = UDim2.new(0, PreviewLayout and 12 or 0, 0, 0),
 		BackgroundTransparency = 1,
 		Visible = false,
 		Parent = Row,
@@ -117,6 +125,9 @@ function ColorPicker.new(Section, Options)
 	Header.MouseButton1Click:Connect(function()
 		self.Open = not self.Open
 		Palette.Visible = self.Open
+		if PreviewLayout then
+			Animation:Play(Preview, { Size = self.Open and UDim2.new(0, 42, 0, 24) or UDim2.new(0, 36, 0, 24) }, { Time = 0.12 })
+		end
 	end)
 
 	self.Row = Row

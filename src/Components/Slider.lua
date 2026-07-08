@@ -32,16 +32,21 @@ function Slider.new(Section, Options)
 	self.Connections = {}
 
 	local CurrentTheme = Theme:Get()
+	local WindowSettings = Section.Tab and Section.Tab.Window and Section.Tab.Window.Settings or {}
+	local PreviewLayout = WindowSettings.Layout == "Preview" or WindowSettings.Style == "Preview" or WindowSettings.PreviewLayout == true
+	local RowTransparency = Options.BackgroundTransparency or (PreviewLayout and 1 or 0)
+	local StrokeTransparency = Options.StrokeTransparency or WindowSettings.RowStrokeTransparency or (PreviewLayout and 0.72 or 0.25)
 
 	local Row = Utility:Create("Frame", {
 		Name = "Slider",
-		Size = Options.Size or UDim2.new(1, 0, 0, Options.Height or 56),
+		Size = Options.Size or UDim2.new(1, 0, 0, Options.Height or (PreviewLayout and 58 or 56)),
 		BackgroundColor3 = CurrentTheme.Secondary,
+		BackgroundTransparency = RowTransparency,
 		BorderSizePixel = 0,
 		Parent = Section.Body,
 	})
-	Utility:Round(Row, 9)
-	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, 0.25)
+	Utility:Round(Row, Options.Radius or (PreviewLayout and 0 or 9))
+	local Stroke = Utility:Stroke(Row, CurrentTheme.Border, 1, StrokeTransparency)
 	Theme:Register(Row, "BackgroundColor3", "Secondary")
 	Theme:Register(Stroke, "Color", "Border")
 
@@ -52,36 +57,42 @@ function Slider.new(Section, Options)
 		Font = Enum.Font.GothamMedium,
 		Text = Options.Text or Options.Name or "Slider",
 		TextColor3 = CurrentTheme.Text,
-		TextSize = 14,
+		TextSize = Options.TextSize or (PreviewLayout and 13 or 14),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = Row,
 	})
 	Theme:Register(Label, "TextColor3", "Text")
 
 	local ValueLabel = Utility:Create("TextLabel", {
-		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -12, 0, 6),
-		Size = UDim2.new(0.35, 0, 0, 20),
-		Font = Enum.Font.Gotham,
+		Size = PreviewLayout and UDim2.new(0, 44, 0, 20) or UDim2.new(0.35, 0, 0, 20),
+		BackgroundColor3 = CurrentTheme.SurfaceLight,
+		BackgroundTransparency = PreviewLayout and 0 or 1,
+		BorderSizePixel = 0,
+		Font = PreviewLayout and Enum.Font.Code or Enum.Font.Gotham,
 		Text = tostring(self.Value),
-		TextColor3 = CurrentTheme.SubText,
-		TextSize = 13,
-		TextXAlignment = Enum.TextXAlignment.Right,
+		TextColor3 = PreviewLayout and CurrentTheme.Accent or CurrentTheme.SubText,
+		TextSize = PreviewLayout and 12 or 13,
+		TextXAlignment = Enum.TextXAlignment.Center,
 		Parent = Row,
 	})
-	Theme:Register(ValueLabel, "TextColor3", "SubText")
+	if PreviewLayout then
+		Utility:Round(ValueLabel, 5)
+	end
+	Theme:Register(ValueLabel, "BackgroundColor3", "SurfaceLight")
+	Theme:Register(ValueLabel, "TextColor3", PreviewLayout and "Accent" or "SubText")
 
 	local Track = Utility:Create("Frame", {
 		Name = "Track",
 		Position = UDim2.new(0, 12, 0, 36),
-		Size = UDim2.new(1, -24, 0, Options.TrackHeight or 8),
-		BackgroundColor3 = CurrentTheme.Border,
+		Size = UDim2.new(1, -24, 0, Options.TrackHeight or (PreviewLayout and 5 or 8)),
+		BackgroundColor3 = CurrentTheme.Track or CurrentTheme.Border,
 		BorderSizePixel = 0,
 		Parent = Row,
 	})
 	Utility:Round(Track, 99)
-	Theme:Register(Track, "BackgroundColor3", "Border")
+	Theme:Register(Track, "BackgroundColor3", "Track")
 
 	local Fill = Utility:Create("Frame", {
 		Name = "Fill",
@@ -96,12 +107,15 @@ function Slider.new(Section, Options)
 	local Knob = Utility:Create("Frame", {
 		Name = "Knob",
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Size = UDim2.new(0, 16, 0, 16),
-		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+		Size = UDim2.new(0, PreviewLayout and 12 or 16, 0, PreviewLayout and 12 or 16),
+		BackgroundColor3 = PreviewLayout and CurrentTheme.Accent or Color3.fromRGB(255, 255, 255),
 		BorderSizePixel = 0,
 		Parent = Track,
 	})
 	Utility:Round(Knob, 99)
+	if PreviewLayout then
+		Theme:Register(Knob, "BackgroundColor3", "Accent")
+	end
 
 	self.Row = Row
 	self.Track = Track
@@ -133,8 +147,8 @@ function Slider.new(Section, Options)
 		self.Value = RoundValue(self.Min + self.Range * Ratio)
 		local VisualRatio = self.Range == 0 and 0 or (self.Value - self.Min) / self.Range
 		ValueLabel.Text = FormatValue(self.Value)
-		Fill.Size = UDim2.new(VisualRatio, 0, 1, 0)
-		Knob.Position = UDim2.new(VisualRatio, 0, 0.5, 0)
+		Animation:Play(Fill, { Size = UDim2.new(VisualRatio, 0, 1, 0) }, { Time = PreviewLayout and 0.08 or 0.04 })
+		Animation:Play(Knob, { Position = UDim2.new(VisualRatio, 0, 0.5, 0) }, { Time = PreviewLayout and 0.08 or 0.04 })
 		if not SkipCallback then
 			Utility:SafeCall(self.Changed, self.Value)
 		end

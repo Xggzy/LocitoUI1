@@ -93,26 +93,26 @@ Movement:Button({
 
 You can add themes, adjust the window layout, and customize individual controls.
 
-For a compact premium dark style, use the built-in `Phantom` theme:
+For a compact preview-style dark layout, use the built-in `Phantom` theme with `Layout = "Preview"`:
 
 ```lua
 local Window = LocitoUI.new({
-    Name = "Locito",
-    Subtitle = "Phantom preset",
+    Name = "Locito Hub",
+    TitleAccent = "Hub",
+    Version = "v1.0",
+    Subtitle = false,
     Theme = "Phantom",
-    LogoText = "LC",
+    Layout = "Preview",
+    LogoText = "L",
     -- LogoImage = "rbxassetid://123456789",
-    Width = 620,
-    Height = 390,
-    SidebarWidth = 138,
-    Padding = 10,
-    Gap = 8,
-    ContentGap = 8,
-    TopBarHeight = 52,
-    PanelRadius = 10,
-    TabHeight = 34,
-    TabIndicatorHeight = 18,
-    TabSelectedTransparency = 0.08,
+    Width = 672,
+    Height = 430,
+    SidebarWidth = 160,
+    TopBarHeight = 54,
+    TabHeight = 40,
+    TabStyle = "Pill",
+    PageSlideOffset = 8,
+    RowStrokeTransparency = 0.72,
     Shadow = true,
     ToggleKey = "RightControl",
     ToggleAnimationTime = 0.18,
