@@ -13,7 +13,9 @@ local Success, ErrorMessage = xpcall(function()
 
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local Stats = game:GetService("Stats")
+	local AdminRemote = ReplicatedStorage:FindFirstChild("LocitoAdminCommand")
 	local Parent = typeof(gethui) == "function" and gethui() or game:GetService("CoreGui")
 	local TestGui = Instance.new("ScreenGui")
 	local CanUseParent = pcall(function()
@@ -178,9 +180,67 @@ local Success, ErrorMessage = xpcall(function()
 		"Settings: FPS",
 		"Settings: Network",
 		"Settings: Connection",
+		"Settings: Admin Hook",
+		"Settings: UI Check",
 		"Settings: Menu Key",
 		"Settings: Animated Logo",
 	}
+
+	local FeatureState = {}
+
+	local function GetAdminRemote()
+		if AdminRemote and AdminRemote.Parent then
+			return AdminRemote
+		end
+
+		AdminRemote = ReplicatedStorage:FindFirstChild("LocitoAdminCommand")
+		if AdminRemote and AdminRemote:IsA("RemoteEvent") then
+			return AdminRemote
+		end
+
+		return nil
+	end
+
+	local function FormatFeatureValue(Value)
+		if typeof(Value) == "Color3" then
+			return ("rgb(%d, %d, %d)"):format(math.floor(Value.R * 255 + 0.5), math.floor(Value.G * 255 + 0.5), math.floor(Value.B * 255 + 0.5))
+		end
+		return tostring(Value)
+	end
+
+	local function SendFeature(Name, Value)
+		local Remote = GetAdminRemote()
+		if not Remote then
+			return false
+		end
+
+		local Sent = pcall(function()
+			Remote:FireServer(Name, Value)
+		end)
+
+		return Sent
+	end
+
+	local function SetFeature(Name, Value, Notify)
+		FeatureState[Name] = Value
+		local Sent = SendFeature(Name, Value)
+		if Notify then
+			local Suffix = Sent and "sent" or "saved"
+			Window:Notify("Updated", Name .. ": " .. FormatFeatureValue(Value) .. " (" .. Suffix .. ")", 1.8, "Info")
+		end
+	end
+
+	local function ToggleFeature(Name)
+		return function(Value)
+			SetFeature(Name, Value, true)
+		end
+	end
+
+	local function QuietFeature(Name)
+		return function(Value)
+			SetFeature(Name, Value, false)
+		end
+	end
 
 	local Aimbot = Window:CreateTab("Aimbot", "A")
 	local Aim = Aimbot:CreateSection("Aimbot")
@@ -188,11 +248,13 @@ local Success, ErrorMessage = xpcall(function()
 	Aim:Toggle({
 		Text = "Aimbot",
 		Default = false,
+		Changed = ToggleFeature("Aimbot.Enabled"),
 	})
 
 	Aim:Toggle({
 		Text = "Team Check",
 		Default = true,
+		Changed = ToggleFeature("Aimbot.TeamCheck"),
 	})
 
 	Aim:Slider({
@@ -201,6 +263,7 @@ local Success, ErrorMessage = xpcall(function()
 		Max = 240,
 		Default = 120,
 		Step = 5,
+		Changed = QuietFeature("Aimbot.FOV"),
 	})
 
 	Aim:Slider({
@@ -209,12 +272,14 @@ local Success, ErrorMessage = xpcall(function()
 		Max = 20,
 		Default = 8,
 		Step = 1,
+		Changed = QuietFeature("Aimbot.Smoothness"),
 	})
 
 	Aim:Dropdown({
 		Text = "Aim Part",
 		Options = { "Head", "Torso", "HumanoidRootPart" },
 		Default = "Head",
+		Changed = ToggleFeature("Aimbot.AimPart"),
 	})
 
 	local Rage = Window:CreateTab("Rage", "R")
@@ -223,21 +288,25 @@ local Success, ErrorMessage = xpcall(function()
 	RageMain:Toggle({
 		Text = "Silent Aim",
 		Default = false,
+		Changed = ToggleFeature("Rage.SilentAim"),
 	})
 
 	RageMain:Toggle({
 		Text = "Rapid Fire",
 		Default = false,
+		Changed = ToggleFeature("Rage.RapidFire"),
 	})
 
 	RageMain:Toggle({
 		Text = "No Recoil",
 		Default = true,
+		Changed = ToggleFeature("Rage.NoRecoil"),
 	})
 
 	RageMain:Toggle({
 		Text = "Auto Peek",
 		Default = false,
+		Changed = ToggleFeature("Rage.AutoPeek"),
 	})
 
 	RageMain:Slider({
@@ -246,12 +315,14 @@ local Success, ErrorMessage = xpcall(function()
 		Max = 360,
 		Default = 180,
 		Step = 10,
+		Changed = QuietFeature("Rage.FOV"),
 	})
 
 	RageMain:Dropdown({
 		Text = "Target Mode",
 		Options = { "Closest", "Lowest Health", "Crosshair" },
 		Default = "Closest",
+		Changed = ToggleFeature("Rage.TargetMode"),
 	})
 
 	local Visual = Window:CreateTab("Visual", "V")
@@ -261,6 +332,7 @@ local Success, ErrorMessage = xpcall(function()
 		Text = "Box ESP",
 		Default = false,
 		Changed = function(Value)
+			SetFeature("Visual.BoxESP", Value, false)
 			Window:Notify("Visual", "Box ESP: " .. tostring(Value), 2, "Info")
 		end,
 	})
@@ -268,16 +340,19 @@ local Success, ErrorMessage = xpcall(function()
 	Esp:Toggle({
 		Text = "Name ESP",
 		Default = true,
+		Changed = ToggleFeature("Visual.NameESP"),
 	})
 
 	Esp:Toggle({
 		Text = "Health Bar",
 		Default = true,
+		Changed = ToggleFeature("Visual.HealthBar"),
 	})
 
 	Esp:Toggle({
 		Text = "Chams",
 		Default = false,
+		Changed = ToggleFeature("Visual.Chams"),
 	})
 
 	local VisualStyle = Visual:CreateSection("Visual Style")
@@ -286,6 +361,7 @@ local Success, ErrorMessage = xpcall(function()
 		Text = "Tracer Origin",
 		Options = { "Bottom", "Center", "Mouse" },
 		Default = "Bottom",
+		Changed = ToggleFeature("Visual.TracerOrigin"),
 	})
 
 	VisualStyle:ColorPicker({
@@ -297,6 +373,7 @@ local Success, ErrorMessage = xpcall(function()
 			Color3.fromRGB(39, 212, 121),
 			Color3.fromRGB(251, 191, 36),
 		},
+		Changed = ToggleFeature("Visual.ESPColor"),
 	})
 
 	local Player = Window:CreateTab("Player", "P")
@@ -308,6 +385,7 @@ local Success, ErrorMessage = xpcall(function()
 		Max = 120,
 		Default = 32,
 		Step = 2,
+		Changed = QuietFeature("Player.WalkSpeed"),
 	})
 
 	Movement:Slider({
@@ -316,11 +394,13 @@ local Success, ErrorMessage = xpcall(function()
 		Max = 180,
 		Default = 70,
 		Step = 5,
+		Changed = QuietFeature("Player.JumpPower"),
 	})
 
 	Movement:Toggle({
 		Text = "Auto Sprint",
 		Default = true,
+		Changed = ToggleFeature("Player.AutoSprint"),
 	})
 
 	local UtilitySection = Player:CreateSection("Utility")
@@ -328,16 +408,19 @@ local Success, ErrorMessage = xpcall(function()
 	UtilitySection:Toggle({
 		Text = "Fly",
 		Default = false,
+		Changed = ToggleFeature("Player.Fly"),
 	})
 
 	UtilitySection:Toggle({
 		Text = "No Clip",
 		Default = false,
+		Changed = ToggleFeature("Player.NoClip"),
 	})
 
 	UtilitySection:Toggle({
 		Text = "Infinite Jump",
 		Default = false,
+		Changed = ToggleFeature("Player.InfiniteJump"),
 	})
 
 	local ThemeTab = Window:CreateTab("Theme", "T")
@@ -627,6 +710,10 @@ local Success, ErrorMessage = xpcall(function()
 		Text = "Network: checking...",
 		Height = 20,
 	})
+	local AdminHookStatus = Status:Label({
+		Text = "Admin Hook: checking...",
+		Height = 20,
+	})
 
 	local function ReadStatsItem(Name)
 		local Display = "N/A"
@@ -699,7 +786,23 @@ local Success, ErrorMessage = xpcall(function()
 		PingLabel:Set("Ping: " .. PingText)
 		FpsLabel:Set("FPS: " .. tostring(Fps))
 		NetworkLabel:Set(("Network: %.1f in / %.1f out kbps"):format(Receive, Send))
+		AdminHookStatus:Set("Admin Hook: " .. (GetAdminRemote() and "connected" or "not found"))
 	end)
+
+	local Diagnostics = Settings:CreateSection("Diagnostics")
+
+	Diagnostics:Button({
+		Text = "Run UI Check",
+		Style = "Accent",
+		Callback = function()
+			local RemoteState = GetAdminRemote() and "connected" or "not found"
+			local Count = 0
+			for _ in pairs(FeatureState) do
+				Count += 1
+			end
+			Window:Notify("UI Check", "Controls ready. States: " .. tostring(Count) .. ". Admin hook: " .. RemoteState .. ".", 4, "Success")
+		end,
+	})
 
 	local Menu = Settings:CreateSection("Menu")
 

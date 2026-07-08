@@ -161,6 +161,8 @@ To show the included demo window directly:
 loadstring(game:HttpGet("https://raw.githubusercontent.com/Xggzy/LocitoUI1/main/Examples/Executor.lua?v=" .. tostring(os.time())))()
 ```
 
+For private games you own, use `Examples/OwnGameServerHooks.lua` in `ServerScriptService` and `Examples/OwnGameClientHooks.lua` in `StarterPlayerScripts` to receive feature state changes from the UI through `ReplicatedStorage.LocitoAdminCommand`.
+
 ## Tabs
 
 ```lua

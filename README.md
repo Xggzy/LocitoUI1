@@ -61,6 +61,8 @@ LocitoUI
 │       └── Tab.lua
 ├── Examples
 │   ├── Executor.lua
+│   ├── OwnGameClientHooks.lua
+│   ├── OwnGameServerHooks.lua
 │   └── Test.lua
 ├── dist
 │   └── LocitoUI.lua
@@ -260,6 +262,8 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Xggzy/LocitoUI1/main/
 ```
 
 See `Examples/Executor.lua` for a full window example.
+
+For a private Roblox place you own, put `Examples/OwnGameServerHooks.lua` in `ServerScriptService` and `Examples/OwnGameClientHooks.lua` in `StarterPlayerScripts`. The executor demo sends feature state changes to `ReplicatedStorage.LocitoAdminCommand` when that RemoteEvent exists.
 
 ## GitHub Usage
 
