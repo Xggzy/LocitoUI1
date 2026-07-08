@@ -2,7 +2,8 @@
 -- Run this whole file from your executor.
 
 local Success, ErrorMessage = xpcall(function()
-	local Source = game:HttpGet("https://raw.githubusercontent.com/Xggzy/LocitoUI1/main/dist/LocitoUI.lua")
+	local CacheBust = tostring(os.time())
+	local Source = game:HttpGet("https://raw.githubusercontent.com/Xggzy/LocitoUI1/main/dist/LocitoUI.lua?v=" .. CacheBust)
 	local Loader, CompileError = loadstring(Source)
 	if not Loader then
 		error(CompileError)
@@ -30,14 +31,14 @@ local Success, ErrorMessage = xpcall(function()
 	local Window = LocitoUI.new({
 		Name = "Locito Hub",
 		TitleAccent = "Hub",
-		Version = "v1.0",
+		Version = "v2.0",
 		Subtitle = false,
 		LogoText = "L",
 		Theme = "Phantom",
 		Layout = "Preview",
 		Parent = Parent,
-		Width = 672,
-		Height = 430,
+		Width = 700,
+		Height = 462,
 		SidebarWidth = 160,
 		TopBarHeight = 54,
 		TabHeight = 40,
@@ -45,6 +46,10 @@ local Success, ErrorMessage = xpcall(function()
 		TabSelectedTransparency = 0,
 		TabHoverTransparency = 0.15,
 		PageSlideOffset = 8,
+		BackgroundLogo = true,
+		BackgroundLogoText = "LC",
+		BackgroundLogoSize = 190,
+		BackgroundLogoRotationSpeed = 28,
 		Shadow = true,
 		ShadowTransparency = 0.42,
 		ToggleKey = "RightControl",
@@ -53,50 +58,42 @@ local Success, ErrorMessage = xpcall(function()
 		Animate = true,
 	})
 
-	local Main = Window:CreateTab("Main", "+")
-	local Combat = Main:CreateSection("Combat")
+	local Visual = Window:CreateTab("Visual", "V")
+	local Esp = Visual:CreateSection("ESP")
 
-	Combat:Toggle({
-		Text = "Silent Aim",
+	Esp:Toggle({
+		Text = "Box ESP",
 		Default = false,
 		Changed = function(Value)
-			Window:Notify("Silent Aim", "Value: " .. tostring(Value), 2, "Info")
+			Window:Notify("Visual", "Box ESP: " .. tostring(Value), 2, "Info")
 		end,
 	})
 
-	Combat:Slider({
-		Text = "FOV",
-		Min = 0,
-		Max = 240,
-		Default = 120,
-		Step = 5,
-	})
-
-	Combat:Toggle({
-		Text = "Team Check",
+	Esp:Toggle({
+		Text = "Name ESP",
 		Default = true,
 	})
 
-	Combat:Dropdown({
-		Text = "Aim Part",
-		Options = { "Head", "Torso", "HumanoidRootPart" },
-		Default = "Head",
+	Esp:Toggle({
+		Text = "Health Bar",
+		Default = true,
 	})
 
-	local Visuals = Main:CreateSection("Visuals")
-
-	Visuals:Toggle({
-		Text = "ESP",
-		Default = false,
-	})
-
-	Visuals:Toggle({
+	Esp:Toggle({
 		Text = "Chams",
 		Default = false,
 	})
 
-	Visuals:ColorPicker({
-		Text = "Accent",
+	local VisualStyle = Visual:CreateSection("Visual Style")
+
+	VisualStyle:Dropdown({
+		Text = "Tracer Origin",
+		Options = { "Bottom", "Center", "Mouse" },
+		Default = "Bottom",
+	})
+
+	VisualStyle:ColorPicker({
+		Text = "ESP Color",
 		ApplyToTheme = true,
 		CloseOnSelect = true,
 		Presets = {
@@ -105,6 +102,77 @@ local Success, ErrorMessage = xpcall(function()
 			Color3.fromRGB(39, 212, 121),
 			Color3.fromRGB(251, 191, 36),
 		},
+	})
+
+	local Aimbot = Window:CreateTab("Aimbot", "A")
+	local Aim = Aimbot:CreateSection("Aimbot")
+
+	Aim:Toggle({
+		Text = "Silent Aim",
+		Default = false,
+	})
+
+	Aim:Toggle({
+		Text = "Team Check",
+		Default = true,
+	})
+
+	Aim:Slider({
+		Text = "FOV",
+		Min = 0,
+		Max = 240,
+		Default = 120,
+		Step = 5,
+	})
+
+	Aim:Slider({
+		Text = "Smoothness",
+		Min = 1,
+		Max = 20,
+		Default = 8,
+		Step = 1,
+	})
+
+	Aim:Dropdown({
+		Text = "Aim Part",
+		Options = { "Head", "Torso", "HumanoidRootPart" },
+		Default = "Head",
+	})
+
+	local Settings = Window:CreateTab("Settings", "S")
+	local Menu = Settings:CreateSection("Menu")
+
+	Menu:Dropdown({
+		Text = "Theme",
+		Options = { "Phantom", "Nebula", "Carbon", "Ocean", "Emerald" },
+		Default = "Phantom",
+		Changed = function(Name)
+			LocitoUI:SetTheme(Name)
+		end,
+	})
+
+	Menu:Keybind({
+		Text = "Menu key",
+		Default = "RightControl",
+		Changed = function(Key, IsNewBind)
+			if IsNewBind then
+				Window:SetToggleKey(Key)
+				Window:Notify("Menu key", "Toggle key set to " .. Key, 2, "Success")
+			end
+		end,
+	})
+
+	Menu:Toggle({
+		Text = "Animated Logo",
+		Default = true,
+	})
+
+	Menu:Button({
+		Text = "Hide Menu",
+		Style = "Accent",
+		Callback = function()
+			Window:Hide()
+		end,
 	})
 
 	local Player = Window:CreateTab("Player", "P")
@@ -131,35 +199,48 @@ local Success, ErrorMessage = xpcall(function()
 		Default = true,
 	})
 
-	local Misc = Window:CreateTab("Misc", "=")
-	local Settings = Misc:CreateSection("Settings")
+	local UtilitySection = Player:CreateSection("Utility")
 
-	Settings:Dropdown({
-		Text = "Theme",
-		Options = { "Phantom", "Nebula", "Carbon", "Ocean", "Emerald" },
-		Default = "Phantom",
-		Changed = function(Name)
-			LocitoUI:SetTheme(Name)
-		end,
+	UtilitySection:Toggle({
+		Text = "No Clip",
+		Default = false,
 	})
 
-	Settings:Keybind({
-		Text = "Menu key",
-		Default = "RightControl",
-		Changed = function(Key, IsNewBind)
-			if IsNewBind then
-				Window:SetToggleKey(Key)
-				Window:Notify("Menu key", "Toggle key set to " .. Key, 2, "Success")
-			end
-		end,
+	UtilitySection:Toggle({
+		Text = "Infinite Jump",
+		Default = false,
 	})
 
-	Settings:Button({
-		Text = "Hide Menu",
-		Style = "Accent",
-		Callback = function()
-			Window:Hide()
-		end,
+	local Rage = Window:CreateTab("Rage", "R")
+	local RageMain = Rage:CreateSection("Rage")
+
+	RageMain:Toggle({
+		Text = "Rapid Fire",
+		Default = false,
+	})
+
+	RageMain:Toggle({
+		Text = "No Recoil",
+		Default = true,
+	})
+
+	RageMain:Toggle({
+		Text = "Auto Peek",
+		Default = false,
+	})
+
+	RageMain:Slider({
+		Text = "Rage FOV",
+		Min = 0,
+		Max = 360,
+		Default = 180,
+		Step = 10,
+	})
+
+	RageMain:Dropdown({
+		Text = "Target Mode",
+		Options = { "Closest", "Lowest Health", "Crosshair" },
+		Default = "Closest",
 	})
 end, function(Message)
 	if debug and debug.traceback then

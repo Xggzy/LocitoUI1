@@ -72,7 +72,7 @@ Compact dark preset:
 local Window = LocitoUI.new({
     Name = "Locito Hub",
     TitleAccent = "Hub",
-    Version = "v1.0",
+    Version = "v2.0",
     Subtitle = false,
     Theme = "Phantom",
     Layout = "Preview",
@@ -86,6 +86,10 @@ local Window = LocitoUI.new({
     TabStyle = "Pill",
     PageSlideOffset = 8,
     RowStrokeTransparency = 0.72,
+    BackgroundLogo = true,
+    BackgroundLogoText = "LC",
+    BackgroundLogoSize = 190,
+    BackgroundLogoRotationSpeed = 28,
     Shadow = true,
 })
 ```
@@ -103,7 +107,7 @@ local LocitoUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Xggz
 To show the included demo window directly:
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/Xggzy/LocitoUI1/main/Examples/Executor.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Xggzy/LocitoUI1/main/Examples/Executor.lua?v=" .. tostring(os.time())))()
 ```
 
 ## Tabs

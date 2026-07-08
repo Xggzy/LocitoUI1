@@ -5,6 +5,7 @@ local Window = {}
 Window.__index = Window
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local Utility = require(script.Parent.Utility)
@@ -203,6 +204,96 @@ function Window.new(Settings)
 	Theme:Register(Main, "BackgroundColor3", "Background")
 	Theme:Register(MainStroke, "Color", "Border")
 	self.Frame = Main
+
+	if Settings.BackgroundLogo ~= false and (Settings.BackgroundLogo == true or PreviewLayout) then
+		local BackgroundLogoSize = Settings.BackgroundLogoSize or (PreviewLayout and 176 or 150)
+		local BackgroundLogoText = Settings.BackgroundLogoText or Settings.LogoText or "L"
+		local BackgroundLogoSpeed = Settings.BackgroundLogoSpeed or Settings.BackgroundLogoRotationSpeed or 22
+		local BackgroundLogo = Utility:Create("Frame", {
+			Name = "AnimatedBackgroundLogo",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = Settings.BackgroundLogoPosition or UDim2.new(1, -126, 1, -80),
+			Size = UDim2.new(0, BackgroundLogoSize, 0, BackgroundLogoSize),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = Main,
+		})
+
+		local OuterRing = Utility:Create("Frame", {
+			Name = "OuterRing",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = BackgroundLogo,
+		})
+		Utility:Round(OuterRing, BackgroundLogoSize)
+		local OuterStroke = Utility:Stroke(OuterRing, CurrentTheme.Accent, 2, Settings.BackgroundLogoRingTransparency or 0.72)
+		Theme:Register(OuterStroke, "Color", "Accent")
+
+		local InnerRing = Utility:Create("Frame", {
+			Name = "InnerRing",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(0.68, 0, 0.68, 0),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = BackgroundLogo,
+		})
+		Utility:Round(InnerRing, BackgroundLogoSize)
+		local InnerStroke = Utility:Stroke(InnerRing, CurrentTheme.AccentLight, 1, Settings.BackgroundLogoRingTransparency or 0.72)
+		Theme:Register(InnerStroke, "Color", "AccentLight")
+
+		local Spoke = Utility:Create("Frame", {
+			Name = "Spoke",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(1, -18, 0, 2),
+			BackgroundColor3 = CurrentTheme.Accent,
+			BackgroundTransparency = 0.74,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = BackgroundLogo,
+		})
+		Theme:Register(Spoke, "BackgroundColor3", "Accent")
+
+		local LogoWatermark = Utility:Create("TextLabel", {
+			Name = "LogoWatermark",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundTransparency = 1,
+			Font = Settings.BackgroundLogoFont or Enum.Font.GothamBlack,
+			Text = BackgroundLogoText,
+			TextColor3 = CurrentTheme.Accent,
+			TextTransparency = Settings.BackgroundLogoTextTransparency or 0.82,
+			TextSize = Settings.BackgroundLogoTextSize or math.floor(BackgroundLogoSize * 0.42),
+			TextXAlignment = Enum.TextXAlignment.Center,
+			TextYAlignment = Enum.TextYAlignment.Center,
+			ZIndex = 0,
+			Parent = BackgroundLogo,
+		})
+		Theme:Register(LogoWatermark, "TextColor3", "Accent")
+
+		self.BackgroundLogo = BackgroundLogo
+		self.BackgroundLogoText = LogoWatermark
+
+		table.insert(self.Connections, RunService.RenderStepped:Connect(function(DeltaTime)
+			if not BackgroundLogo.Parent then
+				return
+			end
+
+			local Rotation = (BackgroundLogo.Rotation + DeltaTime * BackgroundLogoSpeed) % 360
+			BackgroundLogo.Rotation = Rotation
+			InnerRing.Rotation = -Rotation * 1.35
+			LogoWatermark.Rotation = -Rotation
+			LogoWatermark.TextTransparency = math.clamp((Settings.BackgroundLogoTextTransparency or 0.82) + math.sin(os.clock() * 2) * 0.04, 0.68, 0.92)
+		end))
+	end
 
 	local TopBar = Utility:Create("Frame", {
 		Name = "TopBar",

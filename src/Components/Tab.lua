@@ -27,10 +27,14 @@ function Tab.new(Window, Name, Icon)
 	local IndicatorWidth = Settings.TabIndicatorWidth or 3
 	local IndicatorHeight = Settings.TabIndicatorHeight or 22
 	local UseIndicator = Settings.TabIndicator ~= false and not PillTabs
+	local NormalSize = UDim2.new(1, 0, 0, TabHeight)
+	local HoverSize = Settings.TabHoverGrow == false and NormalSize or UDim2.new(1, 0, 0, TabHeight + 2)
+	local ActiveSize = Settings.TabActiveGrow == false and NormalSize or UDim2.new(1, 0, 0, TabHeight + 4)
+	local LabelX = Icon and TabTextInset or 12
 
 	local Button = Utility:Create("TextButton", {
 		Name = Name .. "Tab",
-		Size = UDim2.new(1, 0, 0, TabHeight),
+		Size = NormalSize,
 		BackgroundColor3 = PillTabs and (CurrentTheme.TabActive or CurrentTheme.Surface) or CurrentTheme.Surface,
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
@@ -73,8 +77,8 @@ function Tab.new(Window, Name, Icon)
 	local Label = Utility:Create("TextLabel", {
 		Name = "Label",
 		BackgroundTransparency = 1,
-		Position = UDim2.new(0, Icon and TabTextInset or 12, 0, 0),
-		Size = UDim2.new(1, -(Icon and TabTextInset or 12) - 8, 1, 0),
+		Position = UDim2.new(0, LabelX, 0, 0),
+		Size = UDim2.new(1, -LabelX - 8, 1, 0),
 		Font = Settings.TabFont or Enum.Font.GothamMedium,
 		Text = Name,
 		TextColor3 = CurrentTheme.SubText,
@@ -110,6 +114,10 @@ function Tab.new(Window, Name, Icon)
 	self.IndicatorHeight = IndicatorHeight
 	self.UseIndicator = UseIndicator
 	self.PillTabs = PillTabs
+	self.NormalSize = NormalSize
+	self.HoverSize = HoverSize
+	self.ActiveSize = ActiveSize
+	self.LabelX = LabelX
 	self.PageSlideOffset = Settings.PageSlideOffset or (PreviewLayout and 8 or 0)
 	self.PageAnimation = Settings.TabPageAnimation ~= false
 	self.SelectedTransparency = Settings.TabSelectedTransparency or 0
@@ -128,19 +136,35 @@ function Tab.new(Window, Name, Icon)
 		Animation:Play(Button, {
 			BackgroundColor3 = ActiveTheme.TabHover or ActiveTheme.SurfaceLight,
 			BackgroundTransparency = self.HoverTransparency,
+			Size = self.HoverSize,
 		}, { Time = 0.12 })
-		Animation:Play(Label, { TextColor3 = ActiveTheme.Text }, { Time = 0.12 })
+		Animation:Play(Label, {
+			Position = UDim2.new(0, self.LabelX + 4, 0, 0),
+			TextColor3 = ActiveTheme.Text,
+		}, { Time = 0.12 })
 		if IconLabel then
-			Animation:Play(IconLabel, { TextColor3 = ActiveTheme.Accent }, { Time = 0.12 })
+			Animation:Play(IconLabel, {
+				Rotation = 14,
+				TextColor3 = ActiveTheme.Accent,
+			}, { Time = 0.12 })
 		end
 	end)
 
 	Button.MouseLeave:Connect(function()
 		if Window.ActiveTab == self then return end
-		Animation:Play(Button, { BackgroundTransparency = 1 }, { Time = 0.12 })
-		Animation:Play(Label, { TextColor3 = Theme:Get().SubText }, { Time = 0.12 })
+		Animation:Play(Button, {
+			BackgroundTransparency = 1,
+			Size = self.NormalSize,
+		}, { Time = 0.12 })
+		Animation:Play(Label, {
+			Position = UDim2.new(0, self.LabelX, 0, 0),
+			TextColor3 = Theme:Get().SubText,
+		}, { Time = 0.12 })
 		if IconLabel then
-			Animation:Play(IconLabel, { TextColor3 = Theme:Get().Muted }, { Time = 0.12 })
+			Animation:Play(IconLabel, {
+				Rotation = 0,
+				TextColor3 = Theme:Get().Muted,
+			}, { Time = 0.12 })
 		end
 	end)
 
@@ -167,22 +191,39 @@ function Tab:_SetSelected(IsSelected)
 		Animation:Play(self.Button, {
 			BackgroundColor3 = self.PillTabs and (ActiveTheme.TabActive or ActiveTheme.Surface) or ActiveTheme.Surface,
 			BackgroundTransparency = self.SelectedTransparency,
+			Size = self.ActiveSize,
 		}, { Time = 0.15 })
 		if self.UseIndicator then
 			Animation:Play(self.Indicator, { Size = UDim2.new(0, self.IndicatorWidth, 0, self.IndicatorHeight) }, { Time = 0.15 })
 		end
-		Animation:Play(self.Label, { TextColor3 = self.PillTabs and ActiveTheme.Accent or ActiveTheme.Text }, { Time = 0.15 })
+		Animation:Play(self.Label, {
+			Position = UDim2.new(0, self.LabelX + 4, 0, 0),
+			TextColor3 = self.PillTabs and ActiveTheme.Accent or ActiveTheme.Text,
+		}, { Time = 0.15 })
 		if self.IconLabel then
-			Animation:Play(self.IconLabel, { TextColor3 = ActiveTheme.Accent }, { Time = 0.15 })
+			self.IconLabel.Rotation = -18
+			Animation:Play(self.IconLabel, {
+				Rotation = 0,
+				TextColor3 = ActiveTheme.Accent,
+			}, { Time = 0.22, Style = Enum.EasingStyle.Back })
 		end
 	else
-		Animation:Play(self.Button, { BackgroundTransparency = 1 }, { Time = 0.15 })
+		Animation:Play(self.Button, {
+			BackgroundTransparency = 1,
+			Size = self.NormalSize,
+		}, { Time = 0.15 })
 		if self.UseIndicator then
 			Animation:Play(self.Indicator, { Size = UDim2.new(0, self.IndicatorWidth, 0, 0) }, { Time = 0.15 })
 		end
-		Animation:Play(self.Label, { TextColor3 = Theme:Get().SubText }, { Time = 0.15 })
+		Animation:Play(self.Label, {
+			Position = UDim2.new(0, self.LabelX, 0, 0),
+			TextColor3 = Theme:Get().SubText,
+		}, { Time = 0.15 })
 		if self.IconLabel then
-			Animation:Play(self.IconLabel, { TextColor3 = Theme:Get().Muted }, { Time = 0.15 })
+			Animation:Play(self.IconLabel, {
+				Rotation = 0,
+				TextColor3 = Theme:Get().Muted,
+			}, { Time = 0.15 })
 		end
 	end
 end
